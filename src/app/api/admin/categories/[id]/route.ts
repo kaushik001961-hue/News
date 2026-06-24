@@ -1,9 +1,9 @@
+export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
 // GET SINGLE CATEGORY
-
 export async function GET(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -31,7 +31,6 @@ export async function GET(
     return NextResponse.json(category);
   } catch (error) {
     console.error(error);
-
     return NextResponse.json(
       {
         error: "Failed to fetch category",
@@ -44,7 +43,6 @@ export async function GET(
 }
 
 // UPDATE CATEGORY
-
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -66,7 +64,6 @@ export async function PUT(
     return NextResponse.json(category);
   } catch (error) {
     console.error(error);
-
     return NextResponse.json(
       {
         error: "Failed to update category",
@@ -79,7 +76,6 @@ export async function PUT(
 }
 
 // DELETE CATEGORY
-
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -99,7 +95,6 @@ export async function DELETE(
     });
   } catch (error) {
     console.error(error);
-
     return NextResponse.json(
       {
         error: "Failed to delete category",
