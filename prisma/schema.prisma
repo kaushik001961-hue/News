@@ -1,0 +1,314 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String        @id @default(cuid())
+  name         String
+  email        String        @unique
+  password     String
+  role         Role
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  image        String?
+  phone        String?
+  status       UserStatus    @default(ACTIVE)
+  bio          String?
+  designation  String?
+  facebook     String?
+  instagram    String?
+  linkedin     String?
+  slug         String?       @unique
+  twitter      String?
+  website      String?
+  youtube      String?
+  activityLogs ActivityLog[]
+  Comment      Comment[]
+  posts        Post[]
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  posts     Post[]
+}
+
+model State {
+  id        String     @id @default(cuid())
+  name      String
+  slug      String     @unique
+  districts District[]
+  posts     Post[]
+}
+
+model District {
+  id      String   @id @default(cuid())
+  name    String
+  slug    String   @unique
+  stateId String
+  state   State    @relation(fields: [stateId], references: [id])
+  posts   Post[]
+  talukas Taluka[]
+}
+
+model Taluka {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  districtId String
+  posts      Post[]
+  district   District @relation(fields: [districtId], references: [id])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  slug      String?  @unique
+  posts     Post[]   @relation("PostToTag")
+}
+
+model Post {
+  id             String     @id @default(cuid())
+  title          String
+  content        String
+  image          String?
+  slug           String     @unique
+  status         PostStatus @default(DRAFT)
+  authorId       String
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+  categoryId     String?
+  breaking       Boolean    @default(false)
+  featured       Boolean    @default(false)
+  talukaId       String?
+  video          String?
+  districtId     String?
+  stateId        String?
+  village        String?
+  geography      Geography?
+  excerpt        String?
+  publishedAt    DateTime?
+  seoDescription String?
+  seoTitle       String?
+  views          Int        @default(0)
+  canonicalUrl   String?
+  editorsPick    Boolean    @default(false)
+  focusKeyword   String?
+  hero           Boolean    @default(false)
+  likes          Int        @default(0)
+  seoKeywords    String?
+  shares         Int        @default(0)
+  trending       Boolean    @default(false)
+  Comment        Comment[]
+  author         User       @relation(fields: [authorId], references: [id])
+  category       Category?  @relation(fields: [categoryId], references: [id])
+  district       District?  @relation(fields: [districtId], references: [id])
+  state          State?     @relation(fields: [stateId], references: [id])
+  taluka         Taluka?    @relation(fields: [talukaId], references: [id])
+  tags           Tag[]      @relation("PostToTag")
+}
+
+model Media {
+  id           String   @id @default(cuid())
+  filename     String
+  originalName String
+  url          String
+  mimeType     String
+  size         Int
+  width        Int?
+  height       Int?
+  alt          String?
+  createdAt    DateTime @default(now())
+  folder       String?  @default("news")
+  updatedAt    DateTime @updatedAt
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String?
+  entityId  String?
+  ip        String?
+  browser   String?
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  postId    String
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Advertisement {
+  id String @id @default(cuid())
+
+  title String
+
+  slug String @unique
+
+  image String?
+
+  htmlCode String? @db.Text
+
+  targetUrl String?
+
+  position AdPosition
+
+  device AdDevice @default(ALL)
+
+  priority Int @default(1)
+
+  active Boolean @default(true)
+
+  impressions Int @default(0)
+
+  clicks Int @default(0)
+
+  startDate DateTime?
+
+  endDate DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  impressionsLog AdImpression[]
+
+  clicksLog AdClick[]
+
+  @@index([position])
+  @@index([active])
+}
+
+model VisitorSession {
+  id String @id @default(cuid())
+
+  ip String?
+
+  country String?
+  state   String?
+  city    String?
+
+  browser String?
+  os      String?
+  device  String?
+
+  createdAt DateTime @default(now())
+
+  pageViews PageView[]
+}
+
+model PageView {
+  id String @id @default(cuid())
+
+  path String
+
+  postId String?
+
+  visitorId String
+
+  visitor VisitorSession @relation(fields: [visitorId], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([path])
+  @@index([createdAt])
+}
+
+model AdImpression {
+  id String @id @default(cuid())
+
+  advertisementId String
+
+  advertisement Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+
+  ip String?
+
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([advertisementId])
+}
+
+model AdClick {
+  id String @id @default(cuid())
+
+  advertisementId String
+
+  advertisement Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+
+  ip String?
+
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([advertisementId])
+}
+
+enum AdPosition {
+  HEADER
+  HOME_TOP
+  HOME_MIDDLE
+  HOME_BOTTOM
+
+  SIDEBAR_TOP
+  SIDEBAR_MIDDLE
+  SIDEBAR_BOTTOM
+
+  ARTICLE_TOP
+  ARTICLE_MIDDLE
+  ARTICLE_BOTTOM
+
+  FOOTER
+}
+
+enum AdDevice {
+  MOBILE
+  DESKTOP
+  ALL
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  REPORTER
+}
+
+enum PostStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+  REJECTED
+  APPROVED
+}
+
+enum Geography {
+  INTERNATIONAL
+  NATIONAL
+  STATE
+  DISTRICT
+  TALUKA
+  LOCAL
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  PENDING
+}

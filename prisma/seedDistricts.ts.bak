@@ -1,0 +1,16 @@
+import { prisma } from "../src/lib/prisma";
+import districts from "../data/districts.json";
+
+export async function seedDistricts() {
+for (const district of districts) {
+await prisma.district.upsert({
+where: {
+code: district.code,
+},
+update: {},
+create: district,
+});
+}
+
+console.log("Districts Seeded");
+}
