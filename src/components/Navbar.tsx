@@ -12,53 +12,43 @@ export default function Navbar() {
   const { data: session } = useSession();
   const [open, setOpen] = useState(false);
 
-  // Safety Fallback: If someone is in the admin panel backend, 
-  // do not render the floating public navbar at all.
-  if (pathname?.startsWith("/dashboard")) {
-    return null;
-  }
+  const navItems = [
+    { name: "Home", href: "/" },
+    // Points directly to the admin area when logged in
+    ...(session ? [{ name: "Dashboard", href: "/admin" }] : []),
+    { name: "Politics", href: "/category/politics" },
+    { name: "Business", href: "/category/business" },
+    { name: "Sports", href: "/category/sports" },
+    { name: "Technology", href: "/category/technology" },
+  ];
 
- // Inside your Navbar component...
-
-const navItems = [
-  { name: "Home", href: "/" },
-  // Dynamically append the Dashboard option if a user is currently logged in
-  ...(session ? [{ name: "Dashboard", href: "/dashboard" }] : []),
-  { name: "Politics", href: "/category/politics" },
-  { name: "Business", href: "/category/business" },
-  { name: "Sports", href: "/category/sports" },
-  { name: "Technology", href: "/category/technology" },
-];
   return (
     <header className="sticky top-4 z-50 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="rounded-[24px] bg-white/90 backdrop-blur-xl shadow-2xl border border-gray-200">
           <div className="h-18 px-6 py-3 flex items-center justify-between">
             
-<Link
-  href="/"
-  className="flex items-center gap-3 h-full"
->
-  <div className="relative h-12 w-36 flex items-center overflow-hidden rounded-xl bg-[#0b1329]">
-    <Image
-      src="/ags-logo.png"
-      alt="AGS NEWS"
-      fill
-      sizes="(max-width: 768px) 100vw, 150px"
-      priority
-      className="object-contain p-1"
-    />
-  </div>
+            <Link href="/" className="flex items-center gap-3 h-full">
+              <div className="relative h-12 w-36 flex items-center overflow-hidden rounded-xl bg-[#0b1329]">
+                <Image
+                  src="/ags-logo.png"
+                  alt="AGS NEWS"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 150px"
+                  priority
+                  className="object-contain p-1"
+                />
+              </div>
 
-  <div className="hidden md:block select-none">
-    <h2 className="font-bold text-xl leading-none tracking-tight text-gray-900">
-      AGS NEWS
-    </h2>
-    <p className="text-[11px] text-gray-500 mt-0.5 font-medium">
-      Digital News Platform
-    </p>
-  </div>
-</Link>
+              <div className="hidden md:block select-none">
+                <h2 className="font-bold text-xl leading-none tracking-tight text-gray-900">
+                  AGS NEWS
+                </h2>
+                <p className="text-[11px] text-gray-500 mt-0.5 font-medium">
+                  Digital News Platform
+                </p>
+              </div>
+            </Link>
 
             {/* Desktop Menu */}
             <nav className="hidden lg:flex items-center gap-8">

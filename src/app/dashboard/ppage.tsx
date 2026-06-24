@@ -1,112 +1,26 @@
-
-import { getServerSession } from "next-auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
-import { prisma } from "@/lib/prisma";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-import PostsTable from "@/components/dashboard/PostsTable";
-import { signOut } from "next-auth/react";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth"; // Adjust this import path if your configuration file lives elsewhere
 
+export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardRedirectPage() {
   const session = await getServerSession(authOptions);
 
+  // 1. If the user is not authenticated, send them to the login screen
   if (!session) {
     redirect("/login");
   }
 
-  const isReporter = session.user.role === "REPORTER";
+  // 2. Role-based routing depending on their permissions
+  if (session?.user?.role === "ADMIN") {
+    redirect("/admin");
+  } else if (session?.user?.role === "REPORTER") {
+    redirect("/reporter");
+  } else if (session?.user?.role === "EDITOR") {
+    redirect("/editor");
+  }
 
-  const filter = isReporter
-    ? {
-        author: {
-          email: session.user.email!,
-        },
-      }
-    : {};
-
-  const totalPosts = await prisma.post.count({
-    where: filter,
-  });
-
-  const draftPosts = await prisma.post.count({
-    where: {
-      ...filter,
-      status: "DRAFT",
-    },
-  });
-
-  const pendingPosts = await prisma.post.count({
-    where: {
-      ...filter,
-      status: "PENDING",
-    },
-  });
-
-  const rejectedPosts = await prisma.post.count({
-    where: {
-      ...filter,
-      status: "REJECTED",
-    },
-  });
-
-  const publishedPosts = await prisma.post.count({
-    where: {
-      ...filter,
-      status: "PUBLISHED",
-    },
-  });
-
- 
-
-  return (
-
-        <div className="p-6">
-
-      <div className="mb-8">
-      <h1 className="text-4xl font-bold">
-  Welcome, {session.user.name} 👋
-</h1>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-        <Link href="/dashboard/posts">
-          <div className="bg-blue-100 border border-blue-300 rounded-lg p-4 hover:shadow-lg">
-            <h3 className="font-semibold text-blue-700">Total Posts</h3>
-            <p className="text-3xl font-bold text-blue-700">{totalPosts}</p>
-          </div>
-        </Link>
-
-        <Link href="/dashboard/posts?status=DRAFT">
-          <div className="bg-yellow-100 border border-yellow-300 rounded-lg p-4 hover:shadow-lg">
-            <h3 className="font-semibold text-yellow-700">Draft Posts</h3>
-            <p className="text-3xl font-bold text-yellow-700">{draftPosts}</p>
-          </div>
-        </Link>
-
-        <Link href="/dashboard/posts?status=PENDING">
-          <div className="bg-purple-100 border border-purple-300 rounded-lg p-4 hover:shadow-lg">
-            <h3 className="font-semibold text-purple-700">Pending Posts</h3>
-            <p className="text-3xl font-bold text-purple-700">{pendingPosts}</p>
-          </div>
-        </Link>
-
-        <Link href="/dashboard/posts?status=REJECTED">
-          <div className="bg-red-100 border border-red-300 rounded-lg p-4 hover:shadow-lg">
-            <h3 className="font-semibold text-red-700">Rejected Posts</h3>
-            <p className="text-3xl font-bold text-red-700">{rejectedPosts}</p>
-          </div>
-        </Link>
-
-        <Link href="/dashboard/posts?status=PUBLISHED">
-          <div className="bg-green-100 border border-green-300 rounded-lg p-4 hover:shadow-lg">
-            <h3 className="font-semibold text-green-700">Published Posts</h3>
-            <p className="text-3xl font-bold text-green-700">{publishedPosts}</p>
-          </div>
-        </Link>
-
-      </div>
-    </div>
-  );
+  // 3. Fallback default redirect if no custom roles are matched
+  redirect("/");
 }
