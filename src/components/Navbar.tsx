@@ -1,187 +1,157 @@
-
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useState } from "react";
-import { Menu, Search, Sun, Moon } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
 
-  const [scrolled, setScrolled] = useState(false);
-  const [mobileOpen, setMobileOpen] = useState(false);
+  // Safety Fallback: If someone is in the admin panel backend, 
+  // do not render the floating public navbar at all.
+  if (pathname?.startsWith("/dashboard")) {
+    return null;
+  }
 
-  useEffect(() => {
+ // Inside your Navbar component...
 
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-
-    return () =>
-      window.removeEventListener(
-        "scroll",
-        handleScroll
-      );
-
-  }, []);
-
-  const menus = [
-    "India",
-    "World",
-    "Politics",
-    "Business",
-    "Sports",
-    "Technology",
-    "Entertainment",
-  ];
-
+const navItems = [
+  { name: "Home", href: "/" },
+  // Dynamically append the Dashboard option if a user is currently logged in
+  ...(session ? [{ name: "Dashboard", href: "/dashboard" }] : []),
+  { name: "Politics", href: "/category/politics" },
+  { name: "Business", href: "/category/business" },
+  { name: "Sports", href: "/category/sports" },
+  { name: "Technology", href: "/category/technology" },
+];
   return (
-
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "backdrop-blur-xl bg-white/90 shadow-lg"
-          : "bg-transparent"
-      }`}
-    >
-
+    <header className="sticky top-4 z-50 px-4">
       <div className="max-w-7xl mx-auto">
-
-        <div className="mx-4 mt-4 rounded-full bg-white/90 backdrop-blur-xl border border-gray-200 shadow-xl">
-
-          <div className="flex items-center justify-between h-20 px-8">
-
-            {/* Logo */}
-
-<Link href="/" className="flex items-center">
-
-  <div className="w-14 h-14 rounded-full overflow-hidden shadow-lg border border-gray-200 bg-white flex items-center justify-center">
-
+        <div className="rounded-[24px] bg-white/90 backdrop-blur-xl shadow-2xl border border-gray-200">
+          <div className="h-18 px-6 py-3 flex items-center justify-between">
+            
+<Link
+  href="/"
+  className="flex items-center gap-3 h-full"
+>
+  <div className="relative h-12 w-36 flex items-center overflow-hidden rounded-xl bg-[#0b1329]">
     <Image
       src="/ags-logo.png"
-      alt="AGS News"
-      width={56}
-      height={56}
-      className="object-cover w-full h-full"
+      alt="AGS NEWS"
+      fill
+      sizes="(max-width: 768px) 100vw, 150px"
       priority
+      className="object-contain p-1"
     />
-
   </div>
 
-  <div className="ml-3">
-
-    <h2 className="font-bold text-2xl text-slate-900">
+  <div className="hidden md:block select-none">
+    <h2 className="font-bold text-xl leading-none tracking-tight text-gray-900">
       AGS NEWS
     </h2>
-
-    <p className="text-gray-500 text-sm">
+    <p className="text-[11px] text-gray-500 mt-0.5 font-medium">
       Digital News Platform
     </p>
-
   </div>
-
 </Link>
 
-
             {/* Desktop Menu */}
-
             <nav className="hidden lg:flex items-center gap-8">
-
-              {menus.map((menu) => (
-
+              {navItems.map((item) => (
                 <Link
-                  key={menu}
-                  href={`/category/${menu.toLowerCase()}`}
-                  className="text-gray-700 hover:text-red-600 transition font-medium"
+                  key={item.href}
+                  href={item.href}
+                  className={`font-medium transition ${
+                    pathname === item.href
+                      ? "text-red-600"
+                      : "text-gray-700 hover:text-red-600"
+                  }`}
                 >
-                  {menu}
+                  {item.name}
                 </Link>
-
               ))}
-
             </nav>
 
-            {/* Right Icons */}
-
-            <div className="hidden lg:flex items-center gap-5">
-
-              <button className="hover:text-red-600 transition">
-
-                <Search size={20} />
-
-              </button>
-
-              <button className="hover:text-red-600 transition">
-
-                <Sun size={20} />
-
-              </button>
-
-              <Link
-                href="/login"
-                className="bg-red-600 hover:bg-red-700 transition text-white px-5 py-2 rounded-full"
-              >
-                Login
-              </Link>
-
+            {/* Desktop Buttons */}
+            <div className="hidden lg:flex items-center gap-3">
+              {!session ? (
+                <>
+                  <Link href="/login" className="px-4 py-2 rounded-full border hover:bg-gray-50 transition">
+                    Login
+                  </Link>
+                  <Link href="/register" className="px-5 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition">
+                    Register
+                  </Link>
+                </>
+              ) : (
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="px-5 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition"
+                >
+                  Logout
+                </button>
+              )}
             </div>
 
-            {/* Mobile */}
-
-            <button
-              onClick={() =>
-                setMobileOpen(!mobileOpen)
-              }
-              className="lg:hidden"
-            >
-
-              <Menu size={28} />
-
+            {/* Mobile Hamburger */}
+            <button className="lg:hidden" onClick={() => setOpen(!open)}>
+              {open ? <X size={28} /> : <Menu size={28} />}
             </button>
 
           </div>
-
         </div>
 
-        {mobileOpen && (
-
-          <div className="lg:hidden mt-4 mx-4 rounded-3xl bg-white shadow-xl p-6">
-
-            <div className="flex flex-col gap-5">
-
-              {menus.map((menu) => (
-
+        {/* Mobile Menu */}
+        {open && (
+          <div className="lg:hidden mt-3 rounded-3xl bg-white shadow-xl border">
+            <div className="flex flex-col p-6 gap-5">
+              {navItems.map((item) => (
                 <Link
-                  key={menu}
-                  href={`/category/${menu.toLowerCase()}`}
-                  onClick={() =>
-                    setMobileOpen(false)
-                  }
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className={`font-medium ${pathname === item.href ? "text-red-600" : "text-gray-700"}`}
                 >
-                  {menu}
+                  {item.name}
                 </Link>
-
               ))}
+              
+              <hr className="border-gray-100" />
 
-              <Link
-                href="/login"
-                className="bg-red-600 text-center text-white rounded-full py-3"
-              >
-                Login
-              </Link>
-
+              {!session ? (
+                <>
+                  <Link
+                    href="/login"
+                    onClick={() => setOpen(false)}
+                    className="border rounded-full py-2 text-center hover:bg-gray-50 transition"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/register"
+                    onClick={() => setOpen(false)}
+                    className="rounded-full bg-red-600 text-white py-2 text-center hover:bg-red-700 transition"
+                  >
+                    Register
+                  </Link>
+                </>
+              ) : (
+                <button
+                  onClick={() => signOut({ callbackUrl: "/" })}
+                  className="rounded-full bg-red-600 text-white py-2 w-full hover:bg-red-700 transition"
+                >
+                  Logout
+                </button>
+              )}
             </div>
-
           </div>
-
         )}
-
       </div>
-
     </header>
-
   );
-
 }
