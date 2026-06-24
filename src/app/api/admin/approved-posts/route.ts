@@ -1,6 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
 
+export const dynamic = "force-dynamic";
+
+// Your existing GET / POST handler code follows...
+export async function GET(request: Request) {
+  // ...
+}
+
 export async function GET() {
   try {
     const posts = await prisma.post.findMany({
