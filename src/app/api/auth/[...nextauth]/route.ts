@@ -1,49 +1,62 @@
-import NextAuth, { type NextAuthOptions } from "next-auth";
+import NextAuth, { type NextAuthOptions, type DefaultSession } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+
+// 1. Declare NextAuth module augmentation to append custom fields to your session types
+declare module "next-auth" {
+  interface Session {
+    user: {
+      id: string;
+      role: string;
+    } & DefaultSession["user"];
+  }
+
+  interface User {
+    role: string;
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id: string;
+    role: string;
+  }
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
-
       credentials: {
         email: { label: "Email", type: "text" },
         password: { label: "Password", type: "password" },
       },
 
       async authorize(credentials) {
-        // 1. Validate input
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
-        // 2. Normalize email (VERY IMPORTANT)
         const email = credentials.email.toLowerCase().trim();
-
         console.log("LOGIN ATTEMPT:", email);
 
-        // 3. Find user
         const user = await prisma.user.findUnique({
           where: { email },
         });
 
         console.log("USER FOUND:", user ? "YES" : "NO");
-
         if (!user) return null;
 
-        // 4. Compare password
         const passwordMatch = await bcrypt.compare(
           credentials.password,
           user.password
         );
 
         console.log("PASSWORD MATCH:", passwordMatch);
-
         if (!passwordMatch) return null;
 
-        // 5. Return safe user object
+        // Return user object containing the database fields
         return {
           id: user.id.toString(),
           email: user.email,
@@ -62,15 +75,15 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role;
+        token.role = user.role;
       }
       return token;
     },
 
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id;
-        (session.user as any).role = token.role;
+        session.user.id = token.id;
+        session.user.role = token.role;
       }
       return session;
     },
@@ -84,5 +97,4 @@ export const authOptions: NextAuthOptions = {
 };
 
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };
