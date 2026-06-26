@@ -28,7 +28,7 @@ model User {
   website      String?
   youtube      String?
   activityLogs ActivityLog[]
-  Comment      Comment[]
+  comments     Comment[] // Changed from 'Comment Comment[]'
   posts        Post[]
 }
 
@@ -107,7 +107,7 @@ model Post {
   seoKeywords    String?
   shares         Int        @default(0)
   trending       Boolean    @default(false)
-  Comment        Comment[]
+  comments       Comment[] // Changed from 'Comment Comment[]'
   author         User       @relation(fields: [authorId], references: [id])
   category       Category?  @relation(fields: [categoryId], references: [id])
   district       District?  @relation(fields: [districtId], references: [id])
