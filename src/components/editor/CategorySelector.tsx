@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface Category {
   id: string;
@@ -10,7 +9,7 @@ interface Category {
 
 interface Props {
   value: string;
-  onChange: (id: string) => void;
+  onChange: (value: string) => void;
 }
 
 export default function CategorySelector({
@@ -18,56 +17,42 @@ export default function CategorySelector({
   onChange,
 }: Props) {
   const [categories, setCategories] = useState<Category[]>([]);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch("/api/categories")
-      .then((res) => res.json())
-      .then(setCategories)
-      .catch(console.error);
+    async function loadCategories() {
+      try {
+        const res = await fetch("/api/categories");
+        const data = await res.json();
+        setCategories(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadCategories();
   }, []);
 
-  const filtered = useMemo(() => {
-    return categories.filter((cat) =>
-      cat.name.toLowerCase().includes(search.toLowerCase())
-    );
-  }, [search, categories]);
-
   return (
-    <div className="rounded-xl border bg-white p-5 shadow-sm space-y-3">
-
+    <div>
       <label className="font-semibold">
         Category
       </label>
 
-      <input
-        type="text"
-        placeholder="Search category..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        className="w-full rounded-lg border p-3"
-      />
-
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border p-3"
+        className="mt-2 w-full rounded-xl border p-3"
       >
         <option value="">
           Select Category
         </option>
 
-        {filtered.map((cat) => (
-          <option
-            key={cat.id}
-            value={cat.id}
-          >
+        {categories.map((cat) => (
+          <option key={cat.id} value={cat.id}>
             {cat.name}
           </option>
         ))}
-
       </select>
-
     </div>
   );
 }

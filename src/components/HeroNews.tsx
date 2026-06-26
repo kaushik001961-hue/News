@@ -1,181 +1,110 @@
-
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface HeroPost {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt?: string | null;
-  image?: string | null;
+id: string;
+title: string;
+slug: string;
+excerpt?: string | null;
+image?: string | null;
 }
 
 export default function HeroNews({
-  posts,
+posts,
 }: {
-  posts: HeroPost[];
+posts: HeroPost[];
 }) {
-  const [current, setCurrent] = useState(0);
+if (!posts || posts.length === 0) return null;
 
-  useEffect(() => {
-    if (!posts || posts.length <= 1) return;
+const featured = posts[0];
+const sideStories = posts.slice(1, 5);
 
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % posts.length);
-    }, 6000);
+return ( <section className="max-w-7xl mx-auto px-4 py-8"> <div className="grid lg:grid-cols-3 gap-6">
 
-    return () => clearInterval(timer);
-  }, [posts]);
+    {/* Featured Story */}
 
-  if (!posts || posts.length === 0) return null;
+    <Link
+      href={`/news/${featured.slug}`}
+      className="lg:col-span-2 group"
+    >
+      <div className="relative h-[520px] overflow-hidden rounded-3xl">
 
-  const post = posts[current];
+        <Image
+          src={featured.image || "/placeholder.jpg"}
+          alt={featured.title}
+          fill
+          priority
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
+        />
 
-  return (
-    <section className="relative h-[72vh] lg:h-[85vh] overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
 
-      {/* Background Image */}
+        <div className="absolute bottom-0 p-8">
 
-      <AnimatePresence mode="wait">
+          <span className="inline-flex items-center bg-red-600 text-white px-4 py-2 rounded-full text-sm font-semibold">
+            🔴 Featured Story
+          </span>
 
-        <motion.div
-          key={post.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
-          className="absolute inset-0"
-        >
-          <Image
-            src={post.image || "/placeholder.jpg"}
-            alt={post.title}
-            fill
-            priority
-            loading="eager"
-            sizes="100vw"
-            className="object-cover"
-          />
-        </motion.div>
+          <h1 className="mt-5 text-3xl md:text-5xl font-bold text-white leading-tight">
+            {featured.title}
+          </h1>
 
-      </AnimatePresence>
-
-      {/* Overlay */}
-
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20" />
-
-      {/* Content */}
-
-      <div className="relative z-20 max-w-7xl mx-auto h-full flex items-center px-6">
-
-        <div className="max-w-3xl">
-
-          <motion.div
-            initial={{ opacity: 0, y: 25 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-
-            <span className="inline-flex items-center gap-2 bg-red-600 text-white px-5 py-2 rounded-full font-semibold text-sm shadow-lg">
-
-              🔴 BREAKING NEWS
-
-            </span>
-
-          </motion.div>
-
-          <motion.h1
-            key={post.title}
-            initial={{ opacity: 0, y: 35 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="mt-7 text-white text-5xl lg:text-7xl font-bold leading-tight"
-          >
-            {post.title}
-          </motion.h1>
-
-          <motion.p
-            key={post.slug}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.25 }}
-            className="mt-7 text-gray-200 text-lg leading-8 max-w-2xl"
-          >
-            {post.excerpt ||
-              "Stay updated with the latest national and international headlines from AGS News Network."}
-          </motion.p>
-
-          <div className="mt-10 flex flex-wrap gap-5">
-
-            <Link
-              href={`/news/${post.slug}`}
-              className="bg-red-600 hover:bg-red-700 transition px-8 py-4 rounded-full text-white font-semibold"
-            >
-              Read Full Story →
-            </Link>
-
-            <button className="border border-white/40 hover:bg-white hover:text-black transition px-8 py-4 rounded-full text-white">
-              Latest Updates
-            </button>
-
-          </div>
+          <p className="mt-4 text-gray-200 text-lg line-clamp-2 max-w-3xl">
+            {featured.excerpt}
+          </p>
 
         </div>
 
       </div>
+    </Link>
 
-      {/* Bottom Cards */}
+    {/* Top Stories */}
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-7xl px-6">
+    <div className="bg-white rounded-3xl shadow-lg p-6">
 
-        <div className="grid md:grid-cols-3 gap-5">
+      <div className="flex items-center justify-between mb-6">
 
-          {posts.slice(0, 3).map((item) => (
+        <h2 className="text-2xl font-bold">
+          Top Stories
+        </h2>
 
-            <Link
-              key={item.id}
-              href={`/news/${item.slug}`}
-              className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl p-5 hover:bg-white/20 transition"
-            >
-
-              <div className="text-red-400 text-xs font-bold uppercase tracking-widest">
-                Top Story
-              </div>
-
-              <div className="mt-2 text-white font-semibold line-clamp-2">
-                {item.title}
-              </div>
-
-            </Link>
-
-          ))}
-
-        </div>
+        <span className="text-red-600 font-semibold">
+          Trending
+        </span>
 
       </div>
 
-      {/* Slider Dots */}
+      <div className="space-y-5">
 
-      <div className="absolute bottom-36 left-1/2 -translate-x-1/2 flex gap-3">
+        {sideStories.map((story, index) => (
+          <Link
+            key={story.id}
+            href={`/news/${story.slug}`}
+            className="flex gap-4 group"
+          >
+            <div className="text-red-600 font-bold text-lg">
+              {String(index + 1).padStart(2, "0")}
+            </div>
 
-        {posts.map((_, index) => (
+            <div>
+              <h3 className="font-semibold text-slate-900 group-hover:text-red-600 transition line-clamp-2">
+                {story.title}
+              </h3>
 
-          <button
-            key={index}
-            onClick={() => setCurrent(index)}
-            className={`transition-all rounded-full ${
-              index === current
-                ? "w-8 h-3 bg-white"
-                : "w-3 h-3 bg-white/40"
-            }`}
-          />
-
+              <p className="text-sm text-gray-500 mt-1">
+                AGS News
+              </p>
+            </div>
+          </Link>
         ))}
 
       </div>
 
-    </section>
-  );
+    </div>
+
+  </div>
+</section>
+);
 }

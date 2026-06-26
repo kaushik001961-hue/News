@@ -154,109 +154,47 @@ model Comment {
 }
 
 model Advertisement {
-  id String @id @default(cuid())
-
-  title String
-
-  slug String @unique
-
-  image String?
-
-  htmlCode String? @db.Text
-
-  targetUrl String?
-
-  position AdPosition
-
-  device AdDevice @default(ALL)
-
-  priority Int @default(1)
-
-  active Boolean @default(true)
-
-  impressions Int @default(0)
-
-  clicks Int @default(0)
-
-  startDate DateTime?
-
-  endDate DateTime?
-
-  createdAt DateTime @default(now())
-
-  updatedAt DateTime @updatedAt
-
+  id             String         @id @default(cuid())
+  title          String
+  slug           String         @unique
+  image          String?
+  htmlCode       String?
+  targetUrl      String?
+  position       AdPosition
+  device         AdDevice       @default(ALL)
+  priority       Int            @default(1)
+  active         Boolean        @default(true)
+  impressions    Int            @default(0)
+  clicks         Int            @default(0)
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  clicksLog      AdClick[]
   impressionsLog AdImpression[]
-
-  clicksLog AdClick[]
 
   @@index([position])
   @@index([active])
 }
 
-model VisitorSession {
-  id String @id @default(cuid())
-
-  ip String?
-
-  country String?
-  state   String?
-  city    String?
-
-  browser String?
-  os      String?
-  device  String?
-
-  createdAt DateTime @default(now())
-
-  pageViews PageView[]
-}
-
-model PageView {
-  id String @id @default(cuid())
-
-  path String
-
-  postId String?
-
-  visitorId String
-
-  visitor VisitorSession @relation(fields: [visitorId], references: [id])
-
-  createdAt DateTime @default(now())
-
-  @@index([path])
-  @@index([createdAt])
-}
-
 model AdImpression {
-  id String @id @default(cuid())
-
+  id              String        @id @default(cuid())
   advertisementId String
-
-  advertisement Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
-
-  ip String?
-
-  userAgent String?
-
-  createdAt DateTime @default(now())
+  ip              String?
+  userAgent       String?
+  createdAt       DateTime      @default(now())
+  advertisement   Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
 
   @@index([advertisementId])
 }
 
 model AdClick {
-  id String @id @default(cuid())
-
+  id              String        @id @default(cuid())
   advertisementId String
-
-  advertisement Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
-
-  ip String?
-
-  userAgent String?
-
-  createdAt DateTime @default(now())
+  ip              String?
+  userAgent       String?
+  createdAt       DateTime      @default(now())
+  advertisement   Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
 
   @@index([advertisementId])
 }
@@ -266,15 +204,12 @@ enum AdPosition {
   HOME_TOP
   HOME_MIDDLE
   HOME_BOTTOM
-
   SIDEBAR_TOP
   SIDEBAR_MIDDLE
   SIDEBAR_BOTTOM
-
   ARTICLE_TOP
   ARTICLE_MIDDLE
   ARTICLE_BOTTOM
-
   FOOTER
 }
 

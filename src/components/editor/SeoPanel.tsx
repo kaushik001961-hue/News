@@ -1,4 +1,3 @@
-
 "use client";
 
 interface Props {
@@ -15,35 +14,24 @@ export default function SeoPanel({
   setSeoDescription,
 }: Props) {
   return (
-    <div className="rounded-xl border bg-white p-6 shadow-sm space-y-5">
-
+    <div className="rounded-xl border bg-white p-6 space-y-4">
       <h2 className="text-xl font-semibold">
-        🔍 SEO Metadata
+        SEO Settings
       </h2>
 
       <div>
-
-        <label className="mb-2 block font-medium">
-          SEO Title
-        </label>
+        <label className="font-medium">SEO Title</label>
 
         <input
-          type="text"
           value={seoTitle}
           onChange={(e) => setSeoTitle(e.target.value)}
-          placeholder="Enter SEO title..."
-          className="w-full rounded-lg border p-3"
+          className="mt-2 w-full rounded-lg border p-3"
+          placeholder="SEO title"
         />
-
-        <p className="mt-1 text-xs text-gray-500">
-          {seoTitle.length}/60 characters
-        </p>
-
       </div>
 
       <div>
-
-        <label className="mb-2 block font-medium">
+        <label className="font-medium">
           SEO Description
         </label>
 
@@ -51,16 +39,10 @@ export default function SeoPanel({
           rows={4}
           value={seoDescription}
           onChange={(e) => setSeoDescription(e.target.value)}
-          placeholder="Enter SEO description..."
-          className="w-full rounded-lg border p-3"
+          className="mt-2 w-full rounded-lg border p-3"
+          placeholder="SEO description"
         />
-
-        <p className="mt-1 text-xs text-gray-500">
-          {seoDescription.length}/160 characters
-        </p>
-
       </div>
-
     </div>
   );
 }

@@ -3,145 +3,174 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Search, Bell, CloudSun } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { signOut, useSession } from "next-auth/react";
 
 export default function Navbar() {
-  const pathname = usePathname();
-  const { data: session } = useSession();
-  const [open, setOpen] = useState(false);
+const pathname = usePathname();
+const { data: session } = useSession();
+const [open, setOpen] = useState(false);
 
-  const navItems = [
-    { name: "Home", href: "/" },
-    // Points directly to the admin area when logged in
-    ...(session ? [{ name: "Dashboard", href: "/admin" }] : []),
-    { name: "Politics", href: "/category/politics" },
-    { name: "Business", href: "/category/business" },
-    { name: "Sports", href: "/category/sports" },
-    { name: "Technology", href: "/category/technology" },
-  ];
+const navItems = [
+{ name: "Home", href: "/" },
+{ name: "Politics", href: "/category/politics" },
+{ name: "Business", href: "/category/business" },
+{ name: "Sports", href: "/category/sports" },
+{ name: "Technology", href: "/category/technology" },
+{ name: "World", href: "/category/world" },
+];
 
-  return (
-    <header className="sticky top-4 z-50 px-4">
-      <div className="max-w-7xl mx-auto">
-        <div className="rounded-[24px] bg-white/90 backdrop-blur-xl shadow-2xl border border-gray-200">
-          <div className="h-18 px-6 py-3 flex items-center justify-between">
-            
-            <Link href="/" className="flex items-center gap-3 h-full">
-              <div className="relative h-12 w-36 flex items-center overflow-hidden rounded-xl bg-[#0b1329]">
-                <Image
-                  src="/ags-logo.png"
-                  alt="AGS NEWS"
-                  fill
-                  sizes="(max-width: 768px) 100vw, 150px"
-                  priority
-                  className="object-contain p-1"
-                />
-              </div>
+return ( <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-slate-200">
 
-              <div className="hidden md:block select-none">
-                <h2 className="font-bold text-xl leading-none tracking-tight text-gray-900">
-                  AGS NEWS
-                </h2>
-                <p className="text-[11px] text-gray-500 mt-0.5 font-medium">
-                  Digital News Platform
-                </p>
-              </div>
-            </Link>
+  <div className="max-w-7xl mx-auto px-4">
 
-            {/* Desktop Menu */}
-            <nav className="hidden lg:flex items-center gap-8">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`font-medium transition ${
-                    pathname === item.href
-                      ? "text-red-600"
-                      : "text-gray-700 hover:text-red-600"
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              ))}
-            </nav>
+    <div className="h-20 flex items-center justify-between gap-6">
 
-            {/* Desktop Buttons */}
-            <div className="hidden lg:flex items-center gap-3">
-              {!session ? (
-                <>
-                  <Link href="/login" className="px-4 py-2 rounded-full border hover:bg-gray-50 transition">
-                    Login
-                  </Link>
-                  <Link href="/register" className="px-5 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition">
-                    Register
-                  </Link>
-                </>
-              ) : (
-                <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  className="px-5 py-2 rounded-full bg-red-600 text-white hover:bg-red-700 transition"
-                >
-                  Logout
-                </button>
-              )}
-            </div>
+      {/* Logo */}
 
-            {/* Mobile Hamburger */}
-            <button className="lg:hidden" onClick={() => setOpen(!open)}>
-              {open ? <X size={28} /> : <Menu size={28} />}
-            </button>
-
-          </div>
+      <Link href="/" className="flex items-center gap-3">
+        <div className="relative h-12 w-36 rounded-xl overflow-hidden bg-[#0b1329]">
+         <Image
+  src="/ags-logo.png"
+  alt="AGS NEWS"
+  fill
+  priority
+  sizes="144px"
+  className="object-contain p-1"
+/>
         </div>
 
-        {/* Mobile Menu */}
-        {open && (
-          <div className="lg:hidden mt-3 rounded-3xl bg-white shadow-xl border">
-            <div className="flex flex-col p-6 gap-5">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setOpen(false)}
-                  className={`font-medium ${pathname === item.href ? "text-red-600" : "text-gray-700"}`}
-                >
-                  {item.name}
-                </Link>
-              ))}
-              
-              <hr className="border-gray-100" />
+        <div className="hidden md:block">
+          <h2 className="font-bold text-xl">
+            AGS NEWS
+          </h2>
 
-              {!session ? (
-                <>
-                  <Link
-                    href="/login"
-                    onClick={() => setOpen(false)}
-                    className="border rounded-full py-2 text-center hover:bg-gray-50 transition"
-                  >
-                    Login
-                  </Link>
-                  <Link
-                    href="/register"
-                    onClick={() => setOpen(false)}
-                    className="rounded-full bg-red-600 text-white py-2 text-center hover:bg-red-700 transition"
-                  >
-                    Register
-                  </Link>
-                </>
-              ) : (
-                <button
-                  onClick={() => signOut({ callbackUrl: "/" })}
-                  className="rounded-full bg-red-600 text-white py-2 w-full hover:bg-red-700 transition"
-                >
-                  Logout
-                </button>
-              )}
-            </div>
-          </div>
-        )}
+          <p className="text-xs text-gray-500">
+            Digital News Platform
+          </p>
+        </div>
+      </Link>
+
+      {/* Search */}
+
+      <div className="hidden lg:flex flex-1 max-w-xl">
+
+        <div className="relative w-full">
+
+          <Search
+            size={18}
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+          />
+
+          <input
+            placeholder="Search news..."
+            className="w-full h-12 rounded-full bg-slate-100 pl-12 pr-4 outline-none focus:ring-2 focus:ring-red-500"
+          />
+
+        </div>
+
       </div>
-    </header>
-  );
+
+      {/* Navigation */}
+
+      <nav className="hidden xl:flex items-center gap-6">
+
+        {navItems.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={
+              pathname === item.href
+                ? "text-red-600 font-semibold"
+                : "text-gray-700 hover:text-red-600 transition"
+            }
+          >
+            {item.name}
+          </Link>
+        ))}
+
+      </nav>
+
+      {/* Right Side */}
+
+      <div className="hidden lg:flex items-center gap-4">
+
+        <div className="flex items-center gap-2 text-sm text-gray-600">
+          <CloudSun size={18} />
+          <span>32°C</span>
+        </div>
+
+        <button className="relative">
+          <Bell size={20} />
+          <span className="absolute -top-1 -right-1 h-2 w-2 bg-red-600 rounded-full" />
+        </button>
+
+        {!session ? (
+          <>
+            <Link
+              href="/login"
+              className="px-4 py-2 border rounded-full"
+            >
+              Login
+            </Link>
+
+            <Link
+              href="/register"
+              className="px-5 py-2 bg-red-600 text-white rounded-full"
+            >
+              Register
+            </Link>
+          </>
+        ) : (
+          <button
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="px-5 py-2 bg-red-600 text-white rounded-full"
+          >
+            Logout
+          </button>
+        )}
+
+      </div>
+
+      {/* Mobile Menu */}
+
+      <button
+        className="lg:hidden"
+        onClick={() => setOpen(!open)}
+      >
+        {open ? <X /> : <Menu />}
+      </button>
+
+    </div>
+
+  </div>
+
+  {/* Trending Categories Row */}
+
+  <div className="hidden lg:block border-t bg-slate-50">
+
+    <div className="max-w-7xl mx-auto px-4">
+
+      <div className="h-12 flex items-center gap-6 text-sm">
+
+        <span className="font-bold text-red-600">
+          Trending:
+        </span>
+
+        <Link href="#">Elections</Link>
+        <Link href="#">Stock Market</Link>
+        <Link href="#">IPL</Link>
+        <Link href="#">AI</Link>
+        <Link href="#">Startups</Link>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</header>
+
+);
 }

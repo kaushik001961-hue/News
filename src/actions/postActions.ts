@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { generateSlug } from "@/lib/slug";
 import { postSchema } from "@/lib/validation";
@@ -12,7 +13,7 @@ export interface PostInput {
   video?: string;
   seoTitle?: string;
   seoDescription?: string;
-  tags?: string; // Comma separated tags string, e.g., "Politics, Tech"
+  tags?: string;
   breaking?: boolean;
   featured?: boolean;
   categoryId?: string;
@@ -24,18 +25,34 @@ export interface PostInput {
   authorId: string;
 }
 
-// Helper to convert comma-separated string tags to unique slug array for Prisma relation connect
-const formatTagsRelation = (tagsString?: string) => {
-  if (!tagsString || !tagsString.trim()) return undefined;
-  
-  const tagList = tagsString.split(",").map(t => t.trim()).filter(Boolean);
-  
+// -----------------------------------------
+// Helper: Convert comma-separated tags
+// -----------------------------------------
+
+const buildTagRelation = (tagsString?: string) => {
+  if (!tagsString || !tagsString.trim()) {
+    return { set: [] };
+  }
+
+  const tagList = tagsString
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+
   return {
-    connect: tagList.map(tagName => ({
-      slug: tagName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')
-    }))
+    set: [],
+    connect: tagList.map((tag) => ({
+      slug: tag
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, ""),
+    })),
   };
 };
+
+// -----------------------------------------
+// Create Draft
+// -----------------------------------------
 
 export async function saveDraft(data: PostInput) {
   const parsed = postSchema.safeParse(data);
@@ -59,26 +76,42 @@ export async function saveDraft(data: PostInput) {
       video: data.video,
       seoTitle: data.seoTitle,
       seoDescription: data.seoDescription,
-      // Fixed: Use Prisma's relational connect syntax
-      tags: formatTagsRelation(data.tags),
+
+      tags: buildTagRelation(data.tags),
+
       breaking: data.breaking ?? false,
       featured: data.featured ?? false,
+
       geography: data.geography as any,
+
       stateId: data.stateId,
       districtId: data.districtId,
       talukaId: data.talukaId,
       village: data.village,
+
       authorId: data.authorId,
       categoryId: data.categoryId,
+
       status: "DRAFT",
     },
+
+    include: {
+      tags: true,
+    },
   });
+
+  revalidatePath("/admin/posts");
+  revalidatePath("/");
 
   return {
     success: true,
     post,
   };
 }
+
+// -----------------------------------------
+// Publish Post
+// -----------------------------------------
 
 export async function publishPost(id: string) {
   const post = await prisma.post.update({
@@ -91,40 +124,64 @@ export async function publishPost(id: string) {
     },
   });
 
+  revalidatePath("/");
+  revalidatePath("/admin/posts");
+
   return {
     success: true,
     post,
   };
 }
 
+// -----------------------------------------
+// Update Post
+// -----------------------------------------
+
 export async function updatePost(
   id: string,
   data: Partial<PostInput>
 ) {
-  // Build safe updatable fields payload
-  const updatePayload: any = { ...data };
+  const updateData: any = {
+    ...data,
+  };
 
   if (data.title) {
-    updatePayload.slug = generateSlug(data.title);
+    updateData.slug = generateSlug(data.title);
   }
 
-  // Fixed: Safely format tags relation if they are included in the update payload
-  if ('tags' in data) {
-    updatePayload.tags = formatTagsRelation(data.tags);
+  if ("tags" in data) {
+    updateData.tags = buildTagRelation(data.tags);
   }
 
   const post = await prisma.post.update({
     where: {
       id,
     },
-    data: updatePayload,
+    data: updateData,
+
+    include: {
+      author: true,
+      category: true,
+      state: true,
+      district: true,
+      taluka: true,
+      tags: true,
+    },
   });
+
+  revalidatePath("/");
+  revalidatePath("/admin/posts");
+  revalidatePath(`/news/${post.slug}`);
 
   return {
     success: true,
     post,
   };
 }
+
+// -----------------------------------------
+// Soft Delete
+// -----------------------------------------
 
 export async function deletePost(id: string) {
   await prisma.post.update({
@@ -136,26 +193,38 @@ export async function deletePost(id: string) {
     },
   });
 
+  revalidatePath("/");
+  revalidatePath("/admin/posts");
+
   return {
     success: true,
   };
 }
+
+// -----------------------------------------
+// Get Single Post
+// -----------------------------------------
 
 export async function getPost(id: string) {
   return prisma.post.findUnique({
     where: {
       id,
     },
+
     include: {
       author: true,
       category: true,
       state: true,
       district: true,
       taluka: true,
-      tags: true, // Included tags layout retrieval automatically
+      tags: true,
     },
   });
 }
+
+// -----------------------------------------
+// Get All Posts
+// -----------------------------------------
 
 export async function getPosts() {
   return prisma.post.findMany({
@@ -165,19 +234,25 @@ export async function getPosts() {
       state: true,
       district: true,
       taluka: true,
-      tags: true, // Included tags layout retrieval automatically
+      tags: true,
     },
+
     orderBy: {
       createdAt: "desc",
     },
   });
 }
 
+// -----------------------------------------
+// Increment Views
+// -----------------------------------------
+
 export async function incrementViews(id: string) {
   await prisma.post.update({
     where: {
       id,
     },
+
     data: {
       views: {
         increment: 1,

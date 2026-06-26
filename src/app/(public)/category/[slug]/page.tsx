@@ -52,18 +52,15 @@ export default async function CategoryCollectionPage({ params }: PageProps) {
               className="group flex flex-col bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition duration-200"
             >
               {/* Image Frame Wrapper */}
-              <div className="relative aspect-video w-full bg-gray-100 overflow-hidden">
-                <Image
-                  src={post.image || "/placeholder.jpg"}
-                  alt={post.title}
-                  fill
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                  // Explicitly providing width: "auto" alongside objectFit fixes the aspect ratio warning
-                  style={{ objectFit: "cover", width: "auto", height: "auto" }}
-                  priority={index === 0}
-                  className="group-hover:scale-[1.02] transition duration-300"
-                />
-              </div>
+              <div className="relative h-56 w-full">
+  <Image
+    src={post.image || "/placeholder.jpg"}
+    alt={post.title}
+    fill
+    sizes="(max-width:768px) 100vw, 33vw"
+    className="object-cover"
+  />
+</div>
 
               {/* Text Meta Container */}
               <div className="p-6 flex flex-col justify-between flex-1">
