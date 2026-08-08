@@ -1,0 +1,11 @@
+{
+  "navbar": {
+    "home": "Inicio",
+    "login": "Iniciar sesión",
+    "register": "Registrarse"
+  },
+  "register": {
+    "title": "Registro de Reportero",
+    "submit": "Enviar Solicitud"
+  }
+}

@@ -1,0 +1,982 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                    String         @id @default(cuid())
+  name                  String
+  email                 String         @unique
+  password              String
+  role                  Role
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  image                 String?
+  phone                 String?
+  status                UserStatus     @default(ACTIVE)
+  bio                   String?
+  designation           String?
+  facebook              String?
+  instagram             String?
+  linkedin              String?
+  slug                  String?        @unique
+  twitter               String?
+  website               String?
+  youtube               String?
+  activityLogs          ActivityLog[]
+  auditLogs             AuditLog[]
+  bookmarks             Bookmark[]
+  comments              Comment[]
+  uploadedMedia         Media[]
+  newsRevisions         NewsRevision[]
+  notifications         Notification[]
+  approvedPosts         Post[]         @relation("ApprovedPosts")
+  assignedPosts         Post[]         @relation("AssignedEditors")
+  assignedReporterPosts Post[]         @relation("AssignedReporters")
+  posts                 Post[]
+  reviewedPosts         Post[]         @relation("ReviewedPosts")
+  PostActivity          PostActivity[]
+  editedVersions        PostVersion[]
+  reactions             Reaction[]
+  reporter              Reporter?
+}
+
+model Category {
+  id            String        @id @default(cuid())
+  name          String
+  slug          String        @unique
+  createdAt     DateTime      @default(now())
+  active        Boolean       @default(true)
+  color         String?
+  description   String?
+  icon          String?
+  image         String?
+  sortOrder     Int           @default(0)
+  updatedAt     DateTime      @default(now()) @updatedAt
+  news          News[]
+  posts         Post[]
+  subCategories SubCategory[]
+
+  @@index([slug])
+  @@index([active])
+}
+
+model SubCategory {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  active      Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  categoryId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  news        News[]
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@index([slug])
+}
+
+model NewsImage {
+  id        String   @id @default(cuid())
+  newsId    String
+  imageUrl  String
+  caption   String?
+  altText   String?
+  sortOrder Int      @default(0)
+  featured  Boolean  @default(false)
+  width     Int?
+  height    Int?
+  size      Int?
+  createdAt DateTime @default(now())
+  news      News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
+
+  @@index([newsId])
+}
+
+model NewsVideo {
+  id        String        @id @default(cuid())
+  newsId    String
+  title     String?
+  videoUrl  String
+  provider  VideoProvider @default(YOUTUBE)
+  thumbnail String?
+  duration  Int?
+  featured  Boolean       @default(false)
+  sortOrder Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  news      News          @relation(fields: [newsId], references: [id], onDelete: Cascade)
+
+  @@index([newsId])
+}
+
+model NewsComment {
+  id        String        @id @default(cuid())
+  newsId    String
+  parentId  String?
+  name      String
+  email     String?
+  website   String?
+  comment   String
+  status    CommentStatus @default(PENDING)
+  ipAddress String?
+  userAgent String?
+  likes     Int           @default(0)
+  dislikes  Int           @default(0)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  news      News          @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  parent    NewsComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies   NewsComment[] @relation("CommentReplies")
+
+  @@index([newsId])
+  @@index([status])
+  @@index([parentId])
+}
+
+model NewsView {
+  id        String     @id @default(cuid())
+  newsId    String
+  ipAddress String?
+  userAgent String?
+  country   String?
+  state     String?
+  city      String?
+  referrer  String?
+  device    DeviceType @default(UNKNOWN)
+  sessionId String?
+  viewedAt  DateTime   @default(now())
+  news      News       @relation(fields: [newsId], references: [id], onDelete: Cascade)
+
+  @@index([newsId])
+  @@index([viewedAt])
+  @@index([country])
+}
+
+model News {
+  id            String         @id @default(cuid())
+  title         String
+  slug          String         @unique
+  summary       String?
+  content       String
+  featuredImage String?
+  status        NewsStatus     @default(DRAFT)
+  featured      Boolean        @default(false)
+  breaking      Boolean        @default(false)
+  trending      Boolean        @default(false)
+  publishedAt   DateTime?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  categoryId    String
+  subCategoryId String?
+  reporterId    String?
+  bookmarks     Bookmark[]
+  category      Category       @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  reporter      Reporter?      @relation(fields: [reporterId], references: [id])
+  subCategory   SubCategory?   @relation(fields: [subCategoryId], references: [id])
+  comments      NewsComment[]
+  images        NewsImage[]
+  revisions     NewsRevision[]
+  videos        NewsVideo[]
+  views         NewsView[]
+  reactions     Reaction[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([categoryId])
+  @@index([subCategoryId])
+  @@index([reporterId])
+  @@index([publishedAt])
+}
+
+model NewsRevision {
+  id            String     @id @default(cuid())
+  newsId        String
+  version       Int
+  title         String
+  slug          String
+  summary       String?
+  content       String
+  featuredImage String?
+  status        NewsStatus
+  editorId      String?
+  changeNote    String?
+  createdAt     DateTime   @default(now())
+  editor        User?      @relation(fields: [editorId], references: [id])
+  news          News       @relation(fields: [newsId], references: [id], onDelete: Cascade)
+
+  @@unique([newsId, version])
+  @@index([newsId])
+}
+
+model State {
+  id        String     @id @default(cuid())
+  name      String
+  slug      String     @unique
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now()) @updatedAt
+  districts District[]
+  posts     Post[]
+}
+
+model District {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  stateId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+  state     State    @relation(fields: [stateId], references: [id])
+  posts     Post[]
+  talukas   Taluka[]
+
+  @@index([stateId])
+}
+
+model Taluka {
+  id         String   @id @default(cuid())
+  name       String
+  slug       String   @unique
+  districtId String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+  posts      Post[]
+  district   District @relation(fields: [districtId], references: [id])
+
+  @@index([districtId])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+  slug      String   @unique
+  posts     Post[]   @relation("PostToTag")
+}
+
+model Post {
+  id                 String         @id @default(cuid())
+
+  // ===========================
+  // Basic Information
+  // ===========================
+
+  title              String
+  slug               String         @unique
+  content            String
+  excerpt            String?
+
+  // Existing featured image
+  image              String?
+
+  // Existing video
+  video              String?
+
+  status             PostStatus     @default(DRAFT)
+
+  // ===========================
+  // Author
+  // ===========================
+
+  authorId           String
+
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  publishedAt        DateTime?
+
+  // Auto Save Recommendation
+  lastDraftAt        DateTime?
+
+  // ===========================
+  // Category
+  // ===========================
+
+  categoryId         String?
+
+  // ===========================
+  // Location
+  // ===========================
+
+  stateId            String?
+  districtId         String?
+  talukaId           String?
+  village            String?
+  geography          Geography?
+
+  // ===========================
+  // Homepage Options
+  // ===========================
+
+  breaking           Boolean        @default(false)
+  featured           Boolean        @default(false)
+  hero               Boolean        @default(false)
+  trending           Boolean        @default(false)
+  editorsPick        Boolean        @default(false)
+
+  // ===========================
+  // SEO
+  // ===========================
+
+  seoTitle           String?
+  seoDescription     String?
+  seoKeywords        String?
+  focusKeyword       String?
+  canonicalUrl       String?
+
+  // ===========================
+  // Analytics
+  // ===========================
+
+  views              Int            @default(0)
+  likes              Int            @default(0)
+  shares             Int            @default(0)
+
+  // ===========================
+  // Video Metadata
+  // ===========================
+
+  videoThumbnail     String?
+  videoDuration      Int?
+  videoType          String?
+
+  // ===========================
+  // Editorial Workflow
+  // ===========================
+
+  submittedAt        DateTime?
+  reviewedAt         DateTime?
+  rejectedAt         DateTime?
+
+  rejectReason       String?
+  reviewComment      String?
+
+  approvedById       String?
+  reviewedById       String?
+
+  assignedEditorId   String?
+  assignedReporterId String?
+
+  // ===========================
+  // Relations
+  // ===========================
+
+  author             User           @relation(fields: [authorId], references: [id])
+
+  approvedBy         User?          @relation("ApprovedPosts", fields: [approvedById], references: [id])
+
+  reviewedBy         User?          @relation("ReviewedPosts", fields: [reviewedById], references: [id])
+
+  assignedEditor     User?          @relation("AssignedEditors", fields: [assignedEditorId], references: [id])
+
+  assignedReporter   User?          @relation("AssignedReporters", fields: [assignedReporterId], references: [id])
+
+  category           Category?      @relation(fields: [categoryId], references: [id])
+
+  state              State?         @relation(fields: [stateId], references: [id])
+
+  district           District?      @relation(fields: [districtId], references: [id])
+
+  taluka             Taluka?        @relation(fields: [talukaId], references: [id])
+
+  comments           Comment[]
+  activities         PostActivity[]
+  versions           PostVersion[]
+
+  tags               Tag[]          @relation("PostToTag")
+
+  // Gallery (Recommendation)
+  gallery            PostImage[]
+
+  @@index([status])
+  @@index([authorId])
+  @@index([categoryId])
+
+  @@index([stateId])
+  @@index([districtId])
+  @@index([talukaId])
+
+  @@index([createdAt])
+  @@index([publishedAt])
+
+  @@index([breaking])
+  @@index([featured])
+  @@index([hero])
+  @@index([trending])
+
+  @@index([reviewedById])
+  @@index([approvedById])
+  @@index([assignedEditorId])
+  @@index([assignedReporterId])
+}
+
+
+model PostImage {
+  id         String   @id @default(cuid())
+
+  postId     String
+
+  image      String
+
+  caption    String?
+
+  altText    String?
+
+  sortOrder  Int      @default(0)
+
+  createdAt  DateTime @default(now())
+
+  post       Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+
+  @@index([sortOrder])
+}
+
+model Media {
+  id           String   @id @default(cuid())
+  originalName String
+  url          String
+  mimeType     String
+  size         Int
+  width        Int?
+  height       Int?
+  createdAt    DateTime @default(now())
+  fileName     String
+  publicId     String?
+  uploadedById String?
+  uploadedBy   User?    @relation(fields: [uploadedById], references: [id])
+
+  @@index([uploadedById])
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  action    String
+  entity    String?
+  entityId  String?
+  ip        String?
+  browser   String?
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  postId    String
+  userId    String
+  post      Post     @relation(fields: [postId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model Advertisement {
+  id             String         @id @default(cuid())
+  title          String
+  slug           String         @unique
+  image          String?
+  htmlCode       String?
+  targetUrl      String?
+  position       AdPosition
+  device         AdDevice       @default(ALL)
+  priority       Int            @default(1)
+  active         Boolean        @default(true)
+  impressions    Int            @default(0)
+  clicks         Int            @default(0)
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  clicksLog      AdClick[]
+  impressionsLog AdImpression[]
+
+  @@index([position])
+  @@index([active])
+}
+
+model BreakingNews {
+  id        String    @id @default(cuid())
+  title     String
+  link      String?
+  priority  Int       @default(1)
+  active    Boolean   @default(true)
+  expiresAt DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model Poll {
+  id        String       @id @default(cuid())
+  question  String
+  active    Boolean      @default(true)
+  expiresAt DateTime?
+  createdAt DateTime     @default(now())
+  options   PollOption[]
+}
+
+model PollOption {
+  id     String @id @default(cuid())
+  pollId String
+  option String
+  votes  Int    @default(0)
+  poll   Poll   @relation(fields: [pollId], references: [id], onDelete: Cascade)
+}
+
+model AdImpression {
+  id              String        @id @default(cuid())
+  advertisementId String
+  ip              String?
+  userAgent       String?
+  createdAt       DateTime      @default(now())
+  advertisement   Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+
+  @@index([advertisementId])
+}
+
+model AdClick {
+  id              String        @id @default(cuid())
+  advertisementId String
+  ip              String?
+  userAgent       String?
+  createdAt       DateTime      @default(now())
+  advertisement   Advertisement @relation(fields: [advertisementId], references: [id], onDelete: Cascade)
+
+  @@index([advertisementId])
+}
+
+model PostActivity {
+  id        String   @id @default(cuid())
+  postId    String
+  userId    String
+  action    String
+  comment   String?
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([postId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  link      String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([read])
+}
+
+model PostVersion {
+  id         String   @id @default(cuid())
+  postId     String
+  title      String
+  content    String
+  editedById String
+  createdAt  DateTime @default(now())
+  editedBy   User     @relation(fields: [editedById], references: [id])
+  post       Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([editedById])
+}
+
+
+model Reporter {
+  id                      String                          @id @default(cuid())
+  reporterId              String?                         @unique
+  firstName               String
+  middleName              String?
+  lastName                String
+  photo                   String?
+  dob                     DateTime?
+  email                   String                          @unique
+  phone                   String
+  whatsapp                String?
+  address                 String?
+  district                String?
+  state                   String?
+  pincode                 String?
+  aadhaarNumber           String?
+  panNumber               String?
+  qualification           String?
+  passingYear             Int?
+  previousOrganization    String?
+  designation             String?
+  beat                    String?
+  coverageArea            String?
+  hasCamera               Boolean                         @default(false)
+  hasLaptop               Boolean                         @default(false)
+  emergencyName           String?
+  emergencyPhone          String?
+  emergencyRelation       String?
+  facebook                String?
+  instagram               String?
+  twitter                 String?
+  youtube                 String?
+  status                  ReporterStatus                  @default(PENDING)
+  approvedAt              DateTime?
+  rejectedAt              DateTime?
+  createdAt               DateTime                        @default(now())
+  updatedAt               DateTime                        @updatedAt
+  aadhaar                 String?
+  active                  Boolean                         @default(true)
+  alternatePhone          String?
+  approvedBy              String?
+  availability            String?
+  bloodGroup              BloodGroup?
+  college                 String?
+  currentOrganization     String?
+  drivingLicense          Boolean                         @default(false)
+  experience              Int?
+  hasVehicle              Boolean                         @default(false)
+  journalismDegree        Boolean                         @default(false)
+  languages               String?
+  languagesKnown          String?
+  linkedin                String?
+  maritalStatus           MaritalStatus?
+  nationality             String?                         @default("Indian")
+  pan                     String?
+  preferredLocation       String?
+  pressCard               String?
+  rejectReason            String?
+  remarks                 String?
+  resume                  String?
+  taluka                  String?
+  termsAccepted           Boolean                         @default(false)
+  termsAcceptedAt         DateTime?
+  university              String?
+  verified                Boolean                         @default(false)
+  village                 String?
+  website                 String?
+  gender                  Gender?
+  applicationNo           String                          @unique
+  lastLogin               DateTime?
+  lockedUntil             DateTime?
+  loginAttempts           Int                             @default(0)
+  userId                  String?                         @unique
+  news                    News[]
+  PressCard               PressCard?
+  user                    User?                           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activities              ReporterActivity[]
+  ReporterDocument        ReporterDocument[]
+  notificationPreferences ReporterNotificationPreference?
+
+  @@index([status])
+  @@index([district])
+  @@index([state])
+  @@index([reporterId])
+}
+
+model ReporterNotificationPreference {
+  id                      String   @id @default(cuid())
+  reporterId              String   @unique
+  emailNotifications      Boolean  @default(true)
+  breakingNewsAlerts      Boolean  @default(true)
+  assignmentNotifications Boolean  @default(true)
+  newsApprovalAlerts      Boolean  @default(true)
+  pressCardNotifications  Boolean  @default(true)
+  systemNotifications     Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  reporter                Reporter @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([reporterId])
+}
+
+model ReporterActivity {
+  id          String               @id @default(cuid())
+  reporterId  String
+  action      ReporterActivityType
+  title       String
+  description String?
+  performedBy String?
+  remarks     String?
+  createdAt   DateTime             @default(now())
+  reporter    Reporter             @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([reporterId])
+  @@index([createdAt])
+}
+
+model ReporterDocument {
+  id         String       @id @default(cuid())
+  reporterId String
+  type       DocumentType
+  file       String
+  verified   Boolean      @default(false)
+  createdAt  DateTime     @default(now())
+  reporter   Reporter     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+
+  @@index([reporterId])
+}
+
+model Reaction {
+  id        String       @id @default(cuid())
+  newsId    String
+  userId    String?
+  type      ReactionType
+  createdAt DateTime     @default(now())
+  news      News         @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  user      User?        @relation(fields: [userId], references: [id])
+
+  @@unique([newsId, userId])
+}
+
+model Bookmark {
+  id        String   @id @default(cuid())
+  userId    String
+  newsId    String
+  createdAt DateTime @default(now())
+  news      News     @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, newsId])
+  @@index([userId])
+  @@index([newsId])
+}
+
+model NewsletterSubscriber {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  active       Boolean  @default(true)
+  subscribedAt DateTime @default(now())
+}
+
+model PressCard {
+  id            String   @id @default(cuid())
+  reporterId    String   @unique
+  cardNumber    String   @unique
+  issueDate     DateTime
+  expiryDate    DateTime
+  qrCode        String?
+  active        Boolean  @default(true)
+  designation   String?
+  issuedBy      String?
+  photoOverride String?
+  remarks       String?
+  reporter      Reporter @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  phone     String?
+  subject   String
+  message   String
+  replied   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Menu {
+  id        String   @id @default(cuid())
+  title     String
+  url       String
+  parentId  String?
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  parent    Menu?    @relation("MenuTree", fields: [parentId], references: [id])
+  children  Menu[]   @relation("MenuTree")
+}
+
+model SiteSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  userId      String?
+  action      String
+  entity      String
+  entityId    String
+  description String?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([entity])
+}
+
+enum ReporterStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum DocumentType {
+  PHOTO
+  AADHAAR
+  PAN
+  RESUME
+  CERTIFICATE
+  POLICE_VERIFICATION
+  OTHER
+}
+
+enum Role {
+  ADMIN
+  EDITOR
+  REPORTER
+  SUPER_ADMIN
+  BUREAU_CHIEF
+  SUB_EDITOR
+  ANCHOR
+  CAMERA_MAN
+  VIDEO_EDITOR
+  ADVERTISEMENT_MANAGER
+}
+
+enum PostStatus {
+  DRAFT
+  PENDING
+  APPROVED
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+  SCHEDULED
+}
+
+enum Geography {
+  INTERNATIONAL
+  NATIONAL
+  STATE
+  DISTRICT
+  TALUKA
+  LOCAL
+}
+
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  PENDING
+}
+
+enum AdPosition {
+  HEADER
+  HOME_TOP
+  HOME_MIDDLE
+  HOME_BOTTOM
+  SIDEBAR_TOP
+  SIDEBAR_MIDDLE
+  SIDEBAR_BOTTOM
+  ARTICLE_TOP
+  ARTICLE_MIDDLE
+  ARTICLE_BOTTOM
+  FOOTER
+}
+
+enum DeviceType {
+  DESKTOP
+  MOBILE
+  TABLET
+  BOT
+  UNKNOWN
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum BloodGroup {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+enum ReporterActivityType {
+  REGISTERED
+  PROFILE_UPDATED
+  APPROVED
+  REJECTED
+  BLOCKED
+  ACTIVATED
+  PRESS_CARD_GENERATED
+  DOCUMENT_UPLOADED
+  DOCUMENT_VERIFIED
+  LOGIN
+  NEWS_CREATED
+  NEWS_PUBLISHED
+  PASSWORD_CHANGED
+}
+
+enum VideoProvider {
+  YOUTUBE
+  VIMEO
+  FACEBOOK
+  INSTAGRAM
+  CLOUDINARY
+  UPLOAD
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  WOW
+  SAD
+  ANGRY
+}
+
+enum NewsStatus {
+  DRAFT
+  PENDING
+  REVIEW
+  APPROVED
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+}
+
+enum AdDevice {
+  MOBILE
+  DESKTOP
+  ALL
+  TABLET
+}
