@@ -6,6 +6,8 @@ import { toPng } from "html-to-image";
 import jsPDF from "jspdf";
 import ReporterIdCardV5 from "@/components/Reporter/v5/ReporterIdCardV5";
 import { ReporterCardData } from "@/components/Reporter/v5/types";
+import PressCard from "@/components/Reporter/press-card/PressCard";
+import { PressCardData } from "@/components/Reporter/press-card/types";
 
 export default function ReporterPressCardPage() {
   const [data, setData] = useState<ReporterCardData | null>(null);
