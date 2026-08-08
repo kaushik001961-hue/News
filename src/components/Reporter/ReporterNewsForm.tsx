@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Controller, useForm } from "react-hook-form";
 import { useRef } from "react";
 
-import ImageUploader from "@/components/reporter/ImageUploader";
+import ImageUploader from "@/components/Reporter/ImageUploader";
 
 interface Category {
   id: string;
