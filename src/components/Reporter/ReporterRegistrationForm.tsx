@@ -195,7 +195,7 @@ export default function ReporterRegistrationForm() {
       case 1:
         return (
           <Step1Personal
-            formData={formData}
+            formData={formData as any}
             updateField={updateField}
           />
         );
@@ -203,7 +203,7 @@ export default function ReporterRegistrationForm() {
       case 2:
         return (
           <Step2Contact
-            formData={formData}
+            formData={formData as any}
             updateField={updateField}
           />
         );
@@ -211,7 +211,7 @@ export default function ReporterRegistrationForm() {
       case 3:
         return (
           <Step3Address
-            formData={formData}
+            formData={formData as any}
             updateField={updateField}
           />
         );
@@ -219,7 +219,7 @@ export default function ReporterRegistrationForm() {
       case 4:
         return (
           <Step4Education
-            formData={formData}
+            formData={formData as any}
             updateField={updateField}
           />
         );
@@ -227,7 +227,7 @@ export default function ReporterRegistrationForm() {
       case 5:
         return (
           <Step5Experience
-            formData={formData}
+            formData={formData as any}
             updateField={updateField}
           />
         );
@@ -235,7 +235,7 @@ export default function ReporterRegistrationForm() {
       case 6:
         return (
           <Step6Documents
-            formData={formData}
+            formData={formData as any}
             updateField={updateField}
           />
         );
@@ -243,7 +243,7 @@ export default function ReporterRegistrationForm() {
       case 7:
         return (
           <Step7Social
-            formData={formData}
+            formData={formData as any}
             updateField={updateField}
           />
         );
@@ -251,7 +251,7 @@ export default function ReporterRegistrationForm() {
       case 8:
         return (
           <Step8Coverage
-            formData={formData}
+            formData={formData as any}
             updateField={updateField}
           />
         );
@@ -259,7 +259,7 @@ export default function ReporterRegistrationForm() {
       case 9:
         return (
           <Step9Equipment
-            formData={formData}
+            formData={formData as any}
             updateField={updateField}
           />
         );
@@ -267,7 +267,7 @@ export default function ReporterRegistrationForm() {
       case 10:
         return (
           <Step10Bank
-            formData={formData}
+            formData={formData as any}
             updateField={updateField}
           />
         );
@@ -275,7 +275,7 @@ export default function ReporterRegistrationForm() {
       case 11:
         return (
           <Step11Documents
-            formData={formData}
+            formData={formData as any}
             updateField={updateField}
           />
         );
@@ -283,7 +283,7 @@ export default function ReporterRegistrationForm() {
       case 12:
         return (
           <Step13Account
-            formData={formData}
+            formData={formData as any}
             updateField={updateField}
           />
         );
@@ -291,7 +291,7 @@ export default function ReporterRegistrationForm() {
       case 13:
         return (
           <Step12Review
-            formData={formData}
+            formData={formData as any}
           />
         );
 
