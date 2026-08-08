@@ -34,8 +34,11 @@ const reporter = {
 
   issueDate: "01/01/2026",
   expiryDate: "31/12/2026",
+    hasBike: false,
+  hasCar: false,
 
   authority: "Editor In Chief",
+  
 };
 
 export default function Page() {
