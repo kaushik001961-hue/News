@@ -74,7 +74,7 @@ export default function Step8Coverage({
 
         <select
           value={formData.beat}
-          onChange={(e) => updateField("beat", e.target.value)}
+          onChange={(e) => updateField("beat", e.target.value as any)}
           className="w-full rounded-xl border border-slate-300 p-3 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200"
         >
           <option value="">Select Beat</option>
