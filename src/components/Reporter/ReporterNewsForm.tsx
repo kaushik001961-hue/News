@@ -114,14 +114,22 @@ loadStates();
   }, []);
 
   useEffect(() => {
-  loadDistricts(selectedState);
+    if (selectedState) {
+      loadDistricts(selectedState);
+    } else {
+      setDistricts([]);
+    }
 
   setValue("district", "");
   setValue("taluka", "");
 }, [selectedState]);
 
 useEffect(() => {
-  loadTalukas(selectedDistrict);
+    if (selectedDistrict) {
+      loadTalukas(selectedDistrict);
+    } else {
+      setTalukas([]);
+    }
 
   setValue("taluka", "");
 }, [selectedDistrict]);
@@ -488,7 +496,7 @@ async function loadTalukas(districtId: string) {
           </div>
 
 
- <div>
+<div>
 
             <label className="mb-2 block font-medium">
              District
