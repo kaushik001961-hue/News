@@ -6,7 +6,7 @@ import {
   FieldErrors,
 } from "react-hook-form";
 
-import ImageUploader from "@/components/reporter/ImageUploader";
+import ImageUploader from "@/components/Reporter/ImageUploader";
 import { NewsFormData } from "./types";
 
 interface Props {
