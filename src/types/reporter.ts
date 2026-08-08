@@ -64,18 +64,20 @@ export interface ReporterFormData {
   alternatePhone: string;
 
   // ========================
-  // Address
-  // ========================
+// Address
+// ========================
 
-  address: string;
+address: string;
 
-  city: string;
+city: string;
 
-  district: string;
+district: string;
 
-  state: string;
+taluka: string;
 
-  pincode: string;
+state: string;
+
+pincode: string;
 
   // ========================
   // Identity
@@ -234,6 +236,7 @@ export const defaultReporterForm: ReporterFormData = {
   address: "",
   city: "",
   district: "",
+  taluka: "",
   state: "",
   pincode: "",
 
@@ -291,12 +294,6 @@ website: "",
   emergencyPhone: "",
   emergencyRelation: "",
 
-  facebook: "",
-  instagram: "",
-  twitter: "",
-  youtube: "",
-  website: "",
-  
 
   aadhaarFile: null,
   panFile: null,
