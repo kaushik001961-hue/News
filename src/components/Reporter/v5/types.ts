@@ -10,6 +10,8 @@ export interface ReporterCardData {
   phone: string;
   email: string;
 
+  address?: string;
+  city?: string;
   district: string;
   state: string;
 
@@ -30,10 +32,14 @@ export interface ReporterCardData {
   barcode?: string;
   qrCode?: string;
 
-  issueDate?: string;
-  expiryDate?: string;
+  issueDate?: string | Date;
+  expiryDate?: string | Date;
 
   authority?: string;
+
+  active?: boolean;
+  companyName?: string;
+  companyLogo?: string;
 }
 
 export interface CardSideProps {
