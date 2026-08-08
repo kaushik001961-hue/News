@@ -36,13 +36,11 @@ export default async function PressCardPage() {
     email: String(reporter.email ?? ""),
     phone: String(reporter.phone ?? ""),
     address: String(reporter.address ?? ""),
-    city: String(reporter.city ?? ""),
-    state: String(reporter.state ?? ""),
-    bloodGroup: String(reporter.bloodGroup ?? ""),
-    issueDate: reporter.issueDate ? new Date(reporter.issueDate) : new Date(),
-    expiryDate: reporter.expiryDate
-      ? new Date(reporter.expiryDate)
-      : new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+    city: "",
+    state: "",
+ bloodGroup: reporter.bloodGroup ?? "",
+   
+
     photo: String(reporter.photo || "/images/default-avatar.png"),
     qrCode: `${process.env.NEXT_PUBLIC_APP_URL}/verify/AGS-${reporterIdVal}`,
     active: reporter.status === "APPROVED",
