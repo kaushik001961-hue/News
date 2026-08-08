@@ -40,6 +40,13 @@ export interface ReporterCardData {
   active?: boolean;
   companyName?: string;
   companyLogo?: string;
+
+  linkedin?: string;
+facebook?: string;
+instagram?: string;
+twitter?: string;
+youtube?: string;
+website?: string;
 }
 
 export interface CardSideProps {
