@@ -39,7 +39,7 @@ export default async function PressCardPage() {
   );
 
   // --------------------------------------------------
-  // 4. Press card
+  // 4. Press Card
   // --------------------------------------------------
   const pressCard = reporter.PressCard;
 
@@ -49,99 +49,90 @@ export default async function PressCardPage() {
   const reporterData: ReporterCardData = {
     reporterId: reporterIdVal,
 
-    cardNumber:
-      pressCard?.cardNumber ??
-      `AGS-${reporterIdVal}`,
-
     firstName: String(
       reporter.firstName ?? ""
     ),
 
-    middleName: String(
-      reporter.middleName ?? ""
-    ),
+    middleName:
+      reporter.middleName ?? undefined,
 
     lastName: String(
       reporter.lastName ?? ""
     ),
 
-    designation: String(
+    designation:
       pressCard?.designation ??
-        reporter.designation ??
-        "Reporter"
+      reporter.designation ??
+      "Reporter",
+
+    phone: String(
+      reporter.phone ?? ""
     ),
 
     email: String(
       reporter.email ?? ""
     ),
 
-    phone: String(
-      reporter.phone ?? ""
-    ),
-
-    address: String(
-      reporter.address ?? ""
-    ),
-
-    city: String(
-      reporter.district ??
-        reporter.taluka ??
-        reporter.village ??
-        ""
+    district: String(
+      reporter.district ?? ""
     ),
 
     state: String(
       reporter.state ?? ""
     ),
 
-    bloodGroup: String(
-      reporter.bloodGroup ?? ""
-    ),
+    bloodGroup: reporter.bloodGroup
+      ? String(reporter.bloodGroup)
+      : undefined,
 
-    // ----------------------------------------------
-    // PressCard dates
-    // ----------------------------------------------
-   issueDate: pressCard?.issueDate
-  ? pressCard.issueDate.toISOString()
-  : new Date().toISOString(),
+    dob: reporter.dob
+      ? reporter.dob.toISOString()
+      : undefined,
 
-expiryDate: pressCard?.expiryDate
-  ? pressCard.expiryDate.toISOString()
-  : new Date(
-      new Date().setFullYear(
-        new Date().getFullYear() + 1
-      )
-    ).toISOString(),
+    beat:
+      reporter.beat ?? undefined,
 
-    // ----------------------------------------------
-    // Photo
-    // ----------------------------------------------
-    photo: String(
+    coverageArea:
+      reporter.coverageArea ?? undefined,
+
+    qualification:
+      reporter.qualification ?? undefined,
+
+    experience:
+      reporter.experience ?? null,
+
+    emergencyName:
+      reporter.emergencyName ?? undefined,
+
+    emergencyPhone:
+      reporter.emergencyPhone ?? undefined,
+
+    photo:
       pressCard?.photoOverride ??
-        reporter.photo ??
-        "/images/default-avatar.png"
-    ),
+      reporter.photo ??
+      "/images/default-avatar.png",
 
-    // ----------------------------------------------
-    // QR Code
-    // ----------------------------------------------
     qrCode:
       pressCard?.qrCode ??
       `${process.env.NEXT_PUBLIC_APP_URL}/verify/AGS-${reporterIdVal}`,
 
-    // ----------------------------------------------
-    // Active status
-    // ----------------------------------------------
-    active:
-      pressCard?.active ??
-      reporter.status === "APPROVED",
+    issueDate:
+      pressCard?.issueDate
+        ? pressCard.issueDate.toISOString()
+        : new Date().toISOString(),
 
-    // ----------------------------------------------
-    // Company
-    // ----------------------------------------------
-    companyName: "AGS NEWS",
+    expiryDate:
+      pressCard?.expiryDate
+        ? pressCard.expiryDate.toISOString()
+        : new Date(
+            new Date().setFullYear(
+              new Date().getFullYear() + 1
+            )
+          ).toISOString(),
 
-    companyLogo: "/logo.png",
+    authority:
+      pressCard?.issuedBy ??
+      "AGS NEWS",
   };
 
   // --------------------------------------------------
@@ -151,7 +142,7 @@ expiryDate: pressCard?.expiryDate
     <main className="min-h-screen bg-gray-100 px-4 py-8">
       <div className="mx-auto flex max-w-6xl justify-center">
         <ReporterIdCardV5
-          data={reporterData}
+          reporter={reporterData}
         />
       </div>
     </main>
