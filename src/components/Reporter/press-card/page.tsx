@@ -23,10 +23,12 @@ export default async function PressCardPage() {
     return notFound();
   }
 
+  const reporterIdVal = String(reporter.reporterId ?? "");
+
   const reporterData: ReporterCardData = {
     id: reporter.id,
-    reporterId: String(reporter.reporterId ?? ""),
-    cardNumber: String(reporter.cardNumber ?? `AGS-${reporter.reporterId ?? ""}`),
+    reporterId: reporterIdVal,
+    cardNumber: `AGS-${reporterIdVal}`,
     firstName: String(reporter.firstName ?? ""),
     middleName: String(reporter.middleName ?? ""),
     lastName: String(reporter.lastName ?? ""),
@@ -42,7 +44,7 @@ export default async function PressCardPage() {
       ? new Date(reporter.expiryDate)
       : new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
     photo: String(reporter.photo || "/images/default-avatar.png"),
-    qrCode: `${process.env.NEXT_PUBLIC_APP_URL}/verify/${String(reporter.cardNumber ?? reporter.reporterId ?? "")}`,
+    qrCode: `${process.env.NEXT_PUBLIC_APP_URL}/verify/AGS-${reporterIdVal}`,
     active: reporter.status === "APPROVED",
     companyName: "AGS NEWS",
     companyLogo: "/logo.png",
