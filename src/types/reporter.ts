@@ -147,7 +147,7 @@ export interface ReporterFormData {
 
   internetConnection: boolean;
 
-  // ========================
+    // ========================
   // Bank
   // ========================
 
@@ -175,16 +175,16 @@ export interface ReporterFormData {
   // Social Media
   // ========================
 
-  facebook: string;
+// ========================
+// Social Media
+// ========================
 
-  instagram: string;
-
-  twitter: string;
-
-  youtube: string;
-
-  website: string;
-
+linkedin: string;
+facebook: string;
+instagram: string;
+twitter: string;
+youtube: string;
+website: string;
   // ========================
   // Documents
   // ========================
@@ -254,6 +254,14 @@ export const defaultReporterForm: ReporterFormData = {
   designation: "",
   achievements: "",
 
+  linkedin: "",
+facebook: "",
+instagram: "",
+twitter: "",
+youtube: "",
+website: "",
+  
+
   reporterType: "DISTRICT_REPORTER",
 
   beat: "GENERAL",
@@ -288,6 +296,7 @@ export const defaultReporterForm: ReporterFormData = {
   twitter: "",
   youtube: "",
   website: "",
+  
 
   aadhaarFile: null,
   panFile: null,
