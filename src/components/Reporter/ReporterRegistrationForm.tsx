@@ -20,7 +20,7 @@ import Step11Documents from "./steps/Step11Documents";
 import Step12Review from "./steps/Step12Review";
 import Step13Account from "./steps/Step13Account";
 
-const TOTAL_STEPS = 12;
+const TOTAL_STEPS = 13;
 
 export default function ReporterRegistrationForm() {
   const [step, setStep] = useState(1);
@@ -132,212 +132,197 @@ export default function ReporterRegistrationForm() {
   }
 
   async function submitForm() {
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    // 🟢 Convert the payload to FormData to cleanly handle both files and text fields
-    const dataToSend = new FormData();
+    try {
+      // Convert the payload to FormData to cleanly handle both files and text fields
+      const dataToSend = new FormData();
 
-    // Loop through form data and append everything to the FormData instance
-    Object.entries(formData).forEach(([key, value]) => {
-      if (value !== null && value !== undefined) {
-        if (value instanceof File) {
-          // If it's a raw file object, append it directly
-          dataToSend.append(key, value);
-        } else if (typeof value === "object" && !(value instanceof File)) {
-          // If it's an image state wrapper containing a raw file, target the file property
-          // Adjust 'value.file' depending on how your step upload component stores the file object
-          if (value.file instanceof File) {
-            dataToSend.append(key, value.file);
+      // Loop through form data and append everything to the FormData instance using explicit casting to avoid type errors
+      Object.entries(formData as Record<string, any>).forEach(([key, value]) => {
+        if (value !== null && value !== undefined) {
+          if (typeof window !== "undefined" && value instanceof File) {
+            // If it's a raw file object, append it directly
+            dataToSend.append(key, value);
+          } else if (typeof value === "object" && value !== null) {
+            // If it's an image state wrapper containing a raw file, target the file property
+            if (value.file instanceof File) {
+              dataToSend.append(key, value.file);
+            } else {
+              dataToSend.append(key, JSON.stringify(value));
+            }
           } else {
-            dataToSend.append(key, JSON.stringify(value));
+            // Pass normal text strings and booleans
+            dataToSend.append(key, String(value));
           }
-        } else {
-          // Pass normal text strings and booleans
-          dataToSend.append(key, String(value));
         }
+      });
+
+      const response = await fetch("/api/reporter/register", {
+        method: "POST",
+        body: dataToSend,
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        console.log("Validation Response:", result);
+
+        if (result.errors?.fieldErrors) {
+          console.table(result.errors.fieldErrors);
+        }
+
+        alert(
+          result.message ??
+            JSON.stringify(result.errors?.fieldErrors, null, 2)
+        );
+
+        return;
       }
-    });
 
-    // 🟢 Change headers: do NOT set 'Content-Type' manually when sending FormData
-    // The browser will automatically generate the multipart boundary headers for you.
-    const response = await fetch("/api/reporter/register", {
-      method: "POST",
-      body: dataToSend,
-    });
-
-    const result = await response.json();
-
- if (!response.ok) {
-  console.log("Validation Response:", result);
-
-  if (result.errors?.fieldErrors) {
-    console.table(result.errors.fieldErrors);
+      window.location.href =
+        "/reporter/success?applicationNo=" + result.applicationNo;
+    } catch (error) {
+      console.error("Submission error:", error);
+      alert("Something went wrong during submission.");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  alert(
-    result.message ??
-    JSON.stringify(result.errors?.fieldErrors, null, 2)
-  );
-
-  return;
-}
-
-    window.location.href =
-      "/reporter/success?applicationNo=" + result.applicationNo;
-  } catch (error) {
-    console.error("Submission error:", error);
-    alert("Something went wrong during submission.");
-  } finally {
-    setLoading(false);
-  }
-}
   const renderStep = () => {
-  switch (step) {
-    case 1:
-      return (
-        <Step1Personal
-          formData={formData}
-          updateField={updateField}
-        />
-      );
+    switch (step) {
+      case 1:
+        return (
+          <Step1Personal
+            formData={formData}
+            updateField={updateField}
+          />
+        );
 
-    case 2:
-      return (
-        <Step2Contact
-          formData={formData}
-          updateField={updateField}
-        />
-      );
+      case 2:
+        return (
+          <Step2Contact
+            formData={formData}
+            updateField={updateField}
+          />
+        );
 
-    case 3:
-      return (
-        <Step3Address
-          formData={formData}
-          updateField={updateField}
-        />
-      );
+      case 3:
+        return (
+          <Step3Address
+            formData={formData}
+            updateField={updateField}
+          />
+        );
 
-    case 4:
-      return (
-        <Step4Education
-          formData={formData}
-          updateField={updateField}
-        />
-      );
+      case 4:
+        return (
+          <Step4Education
+            formData={formData}
+            updateField={updateField}
+          />
+        );
 
-    case 5:
-      return (
-        <Step5Experience
-          formData={formData}
-          updateField={updateField}
-        />
-      );
+      case 5:
+        return (
+          <Step5Experience
+            formData={formData}
+            updateField={updateField}
+          />
+        );
 
-   case 6:
-  return (
-    <Step6Documents
-      formData={formData}
-      updateField={updateField}
-    />
-  );
+      case 6:
+        return (
+          <Step6Documents
+            formData={formData}
+            updateField={updateField}
+          />
+        );
 
-    case 7:
-      return (
-        <Step7Social
-          formData={formData}
-          updateField={updateField}
-        />
-      );
+      case 7:
+        return (
+          <Step7Social
+            formData={formData}
+            updateField={updateField}
+          />
+        );
 
-        case 8:
-      return (
-        <Step8Coverage
-          formData={formData}
-          updateField={updateField}
-        />
-      );
+      case 8:
+        return (
+          <Step8Coverage
+            formData={formData}
+            updateField={updateField}
+          />
+        );
 
+      case 9:
+        return (
+          <Step9Equipment
+            formData={formData}
+            updateField={updateField}
+          />
+        );
 
-     
-    case 9:
-      return (
-        <Step9Equipment
-          formData={formData}
-          updateField={updateField}
-        />
-      );
+      case 10:
+        return (
+          <Step10Bank
+            formData={formData}
+            updateField={updateField}
+          />
+        );
 
-    case 10:
-      return (
-        <Step10Bank
-          formData={formData}
-          updateField={updateField}
-        />
-      );
+      case 11:
+        return (
+          <Step11Documents
+            formData={formData}
+            updateField={updateField}
+          />
+        );
 
-   case 11:
-  return (
-    <Step11Documents
-      formData={formData}
-      updateField={updateField}
-    />
-  );
+      case 12:
+        return (
+          <Step13Account
+            formData={formData}
+            updateField={updateField}
+          />
+        );
 
-    case 12:
-  return (
-    <Step13Account
-      formData={formData}
-      updateField={updateField}
-    />
-  );
+      case 13:
+        return (
+          <Step12Review
+            formData={formData}
+          />
+        );
 
-case 13:
-  return (
-    <Step12Review
-      formData={formData}
-    />
-  );
-
-    default:
-      return null;
-  }
-};
+      default:
+        return null;
+    }
+  };
 
   return (
-        <section className="min-h-screen bg-slate-100 py-12">
-
+    <section className="min-h-screen bg-slate-100 py-12">
       <div className="mx-auto max-w-6xl px-4">
-
         {/* Header */}
-
         <div className="mb-10 text-center">
-
           <h1 className="text-4xl font-bold text-slate-900">
             Reporter Registration
           </h1>
-
           <p className="mt-3 text-slate-600">
             Join our newsroom and become part of our professional media network.
           </p>
-
         </div>
 
         {/* Progress Bar */}
-
         <ProgressBar
           currentStep={step}
           totalSteps={TOTAL_STEPS}
         />
 
         {/* Registration Card */}
-
         <div className="mt-8 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xl">
-
           <div className="p-6 md:p-10">
-
             <AnimatePresence mode="wait">
-
               <motion.div
                 key={step}
                 initial={{
@@ -356,19 +341,13 @@ case 13:
                   duration: 0.35,
                 }}
               >
-
                 {renderStep()}
-
               </motion.div>
-
             </AnimatePresence>
-
           </div>
 
           {/* Navigation */}
-
           <div className="border-t border-slate-200 bg-slate-50 px-6 py-5 md:px-10">
-
             <StepNavigation
               currentStep={step}
               totalSteps={TOTAL_STEPS}
@@ -377,13 +356,9 @@ case 13:
               onSubmit={submitForm}
               loading={loading}
             />
-
           </div>
-
         </div>
-
       </div>
-
     </section>
   );
 }
