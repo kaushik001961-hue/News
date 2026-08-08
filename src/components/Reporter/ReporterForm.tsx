@@ -32,10 +32,7 @@ export default function ReporterForm() {
   const [formData, setFormData] =
     useState<ReporterFormData>(defaultReporterForm);
 
-  function updateField<K extends keyof ReporterFormData>(
-    key: K,
-    value: ReporterFormData[K]
-  ) {
+  function updateField(key: string, value: any) {
     setFormData((prev) => ({
       ...prev,
       [key]: value,
