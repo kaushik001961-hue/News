@@ -107,6 +107,9 @@ export default async function PressCardPage() {
     emergencyPhone:
       reporter.emergencyPhone ?? undefined,
 
+    hasBike: Boolean((reporter as any).hasBike ?? false),
+    hasCar: Boolean((reporter as any).hasCar ?? false),
+
     photo:
       pressCard?.photoOverride ??
       reporter.photo ??
