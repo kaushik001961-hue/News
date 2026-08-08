@@ -7,7 +7,18 @@ import {
   Trash2,
 } from "lucide-react";
 
-import type { ReporterPost } from "@/app/reporter/news/page";
+export interface ReporterPost {
+  id: string;
+  title: string;
+  slug: string;
+  status: "DRAFT" | "PENDING" | "UNDER_REVIEW" | "PUBLISHED" | "REJECTED" | "ARCHIVED";
+  category: {
+    name: string;
+  };
+  views?: number;
+  createdAt: string | Date;
+  publishedAt?: string | Date | null;
+}
 
 interface Props {
   posts: ReporterPost[];
@@ -142,7 +153,7 @@ export default function ReporterNewsTable({
 
                 <td className="px-6 py-5">
 
-                  {post.views}
+                  {post.views ?? 0}
 
                 </td>
 
