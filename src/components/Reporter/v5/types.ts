@@ -6,6 +6,10 @@ export interface ReporterCardData {
   lastName: string;
   
   hasVehicle?: boolean;
+  hasBike: boolean;
+
+hasCar: boolean;
+  
 
   designation?: string;
 
