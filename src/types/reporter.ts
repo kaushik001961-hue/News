@@ -56,41 +56,29 @@ export interface ReporterFormData {
   // ========================
 
   email: string;
-
   phone: string;
-
   whatsapp: string;
-
   alternatePhone: string;
 
   // ========================
-// Address
-// ========================
+  // Address
+  // ========================
 
-address: string;
-
-city: string;
-
-district: string;
-
-taluka: string;
-
-state: string;
-
-pincode: string;
+  address: string;
+  city: string;
+  district: string;
+  taluka: string;
+  state: string;
+  pincode: string;
 
   // ========================
   // Identity
   // ========================
 
   aadhaarNumber: string;
-
   panNumber: string;
-
   voterId: string;
-
-  drivingLicense: string;
-
+  drivingLicense: boolean;
   passportNumber: string;
 
   // ========================
@@ -98,11 +86,8 @@ pincode: string;
   // ========================
 
   qualification: string;
-
   institute: string;
-
   passingYear: string;
-
   journalismDegree: boolean;
 
   // ========================
@@ -110,11 +95,8 @@ pincode: string;
   // ========================
 
   experienceYears: number;
-
   previousOrganization: string;
-
   designation: string;
-
   achievements: string;
 
   // ========================
@@ -122,15 +104,10 @@ pincode: string;
   // ========================
 
   reporterType: ReporterType;
-
   beat: BeatType;
-
   bureau: string;
-
   coverageArea: string;
-
   preferredLanguage: string;
-
   workingShift: string;
 
   // ========================
@@ -138,29 +115,21 @@ pincode: string;
   // ========================
 
   hasCamera: boolean;
-
   hasLaptop: boolean;
-
+  hasVehicle: boolean;
   hasBike: boolean;
-
   hasCar: boolean;
-
   hasSmartphone: boolean;
-
   internetConnection: boolean;
 
-    // ========================
+  // ========================
   // Bank
   // ========================
 
   accountHolderName: string;
-
   accountNumber: string;
-
   bankName: string;
-
   ifsc: string;
-
   upiId: string;
 
   // ========================
@@ -168,39 +137,29 @@ pincode: string;
   // ========================
 
   emergencyName: string;
-
   emergencyPhone: string;
-
   emergencyRelation: string;
 
   // ========================
   // Social Media
   // ========================
 
-// ========================
-// Social Media
-// ========================
+  linkedin: string;
+  facebook: string;
+  instagram: string;
+  twitter: string;
+  youtube: string;
+  website: string;
 
-linkedin: string;
-facebook: string;
-instagram: string;
-twitter: string;
-youtube: string;
-website: string;
   // ========================
   // Documents
   // ========================
 
   aadhaarFile?: File | null;
-
   panFile?: File | null;
-
   photoFile?: File | null;
-
   resumeFile?: File | null;
-
   policeVerification?: File | null;
-
   qualificationCertificate?: File | null;
 
   // ========================
@@ -208,11 +167,18 @@ website: string;
   // ========================
 
   acceptedTerms: boolean;
-
   declaration: boolean;
 }
 
+// ========================================================
+// DEFAULT REPORTER FORM
+// ========================================================
+
 export const defaultReporterForm: ReporterFormData = {
+  // ========================
+  // Personal
+  // ========================
+
   photo: "",
 
   firstName: "",
@@ -228,10 +194,18 @@ export const defaultReporterForm: ReporterFormData = {
   maritalStatus: "",
   bloodGroup: "",
 
+  // ========================
+  // Contact
+  // ========================
+
   email: "",
   phone: "",
   whatsapp: "",
   alternatePhone: "",
+
+  // ========================
+  // Address
+  // ========================
 
   address: "",
   city: "",
@@ -240,49 +214,60 @@ export const defaultReporterForm: ReporterFormData = {
   state: "",
   pincode: "",
 
+  // ========================
+  // Identity
+  // ========================
+
   aadhaarNumber: "",
   panNumber: "",
   voterId: "",
-  drivingLicense: "",
+  drivingLicense: false,
   passportNumber: "",
+
+  // ========================
+  // Education
+  // ========================
 
   qualification: "",
   institute: "",
   passingYear: "",
-
   journalismDegree: false,
+
+  // ========================
+  // Experience
+  // ========================
 
   experienceYears: 0,
   previousOrganization: "",
   designation: "",
   achievements: "",
 
-  linkedin: "",
-facebook: "",
-instagram: "",
-twitter: "",
-youtube: "",
-website: "",
-  
+  // ========================
+  // Reporter
+  // ========================
 
   reporterType: "DISTRICT_REPORTER",
-
   beat: "GENERAL",
-
   bureau: "",
-
   coverageArea: "",
-
   preferredLanguage: "Gujarati",
-
   workingShift: "FULL_TIME",
+
+  // ========================
+  // Equipment
+  // ========================
 
   hasCamera: false,
   hasLaptop: false,
+  hasVehicle: false,
   hasBike: false,
   hasCar: false,
   hasSmartphone: true,
   internetConnection: true,
+
+  // ========================
+  // Bank
+  // ========================
 
   accountHolderName: "",
   accountNumber: "",
@@ -290,10 +275,28 @@ website: "",
   ifsc: "",
   upiId: "",
 
+  // ========================
+  // Emergency
+  // ========================
+
   emergencyName: "",
   emergencyPhone: "",
   emergencyRelation: "",
 
+  // ========================
+  // Social Media
+  // ========================
+
+  linkedin: "",
+  facebook: "",
+  instagram: "",
+  twitter: "",
+  youtube: "",
+  website: "",
+
+  // ========================
+  // Documents
+  // ========================
 
   aadhaarFile: null,
   panFile: null,
@@ -301,6 +304,10 @@ website: "",
   resumeFile: null,
   policeVerification: null,
   qualificationCertificate: null,
+
+  // ========================
+  // Declaration
+  // ========================
 
   acceptedTerms: false,
   declaration: false,

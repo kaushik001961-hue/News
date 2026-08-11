@@ -108,7 +108,9 @@ export default function ReporterIdCardFrontV5({
               </div>
 
               <div className="font-medium text-black">
-  {reporter.expiryDate || "--"}
+  {reporter.expiryDate
+  ? new Date(reporter.expiryDate).toLocaleDateString("en-IN")
+  : "--"}
 </div>
             </div>
 
