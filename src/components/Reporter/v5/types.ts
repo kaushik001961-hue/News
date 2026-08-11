@@ -8,7 +8,7 @@ export interface ReporterCardData {
   hasVehicle?: boolean;
   hasBike: boolean;
 
-hasCar: boolean;
+  hasCar: boolean;
   
 
   designation?: string;
@@ -20,6 +20,7 @@ hasCar: boolean;
   city?: string;
   district: string;
   state: string;
+  
 
   bloodGroup?: string;
   dob?: string;

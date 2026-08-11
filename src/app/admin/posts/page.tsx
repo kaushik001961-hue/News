@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import PostsTable from "./PostsTable";
-import StatsCards from "./StatsCards";
+import NewsTable from "../news/NewsTable";
+import StatsCards from "../news/StatsCards";
 
 export default async function PostsPage() {
   const posts = await prisma.post.findMany({
@@ -70,7 +70,7 @@ export default async function PostsPage() {
 
       {/* Posts Table */}
       <div className="rounded-xl border bg-white shadow-sm">
-        <PostsTable posts={posts} />
+        <NewsTable posts={posts} />
       </div>
     </div>
   );

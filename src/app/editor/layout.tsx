@@ -1,23 +1,29 @@
+import { ReactNode } from "react";
+import { redirect } from "next/navigation";
+
+import { auth } from "@/lib/auth";
 import DashboardLayout from "@/components/dashboard/DashboardLayout";
+
+interface EditorLayoutProps {
+  children: ReactNode;
+}
 
 export default async function EditorLayout({
   children,
-}: {
-  children: React.ReactNode;
-}) {
-  // Define fallback session object to fix compilation
-  const session = {
-    user: {
-      id: "editor-user",
-      name: "Editor",
-      email: "editor@example.com",
-      role: "EDITOR",
-    },
-  };
+}: EditorLayoutProps) {
+  const session = await auth();
+
+  if (!session?.user) {
+    redirect("/login");
+  }
+
+  if (session.user.role !== "EDITOR") {
+    redirect("/");
+  }
 
   return (
     <DashboardLayout
-      role={session.user.role as any}
+      role="EDITOR"
       user={session.user as any}
     >
       {children}

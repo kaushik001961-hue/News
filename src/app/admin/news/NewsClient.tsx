@@ -1,10 +1,9 @@
 "use client";
 
-import FilterBar from "./FilterBar";
+import FilterBar from "../posts/FilterBar";
 import { useState } from "react";
 import SearchBar from "./SearchBar";
-import PostsTable from "./PostsTable";
-
+import NewsTable from "./NewsTable";
 
 type Post = {
   id: string;
@@ -61,7 +60,7 @@ function resetFilters() {
   onReset={resetFilters}
 />
 
-<PostsTable
+<NewsTable
   posts={posts}
   search={search}
   status={status}

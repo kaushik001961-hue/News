@@ -1,9 +1,10 @@
+import Link from "next/link";
+
 import { prisma } from "@/lib/prisma";
-import PostsTable from "@/components/dashboard/PostsTable";
+import NewsTable from "@/components/dashboard/NewsTable";
 
-export default async function PostsPage() {
-
-  const posts = await prisma.post.findMany({
+export default async function NewsPage() {
+  const news = await prisma.post.findMany({
     include: {
       author: true,
       category: true,
@@ -14,27 +15,43 @@ export default async function PostsPage() {
   });
 
   return (
+    <div className="space-y-8 p-8">
 
-    <div className="p-8">
+      {/* =====================================================
+          HEADER
+      ===================================================== */}
 
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
-        <h1 className="text-3xl font-bold">
-          Posts Management
-        </h1>
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900">
+            News Management
+          </h1>
 
-        <a
-          href="/editor/create"
-          className="bg-red-600 text-white px-5 py-3 rounded-lg"
+          <p className="mt-1 text-slate-500">
+            Manage all news articles from one place.
+          </p>
+        </div>
+
+        <Link
+          href="/editor/news/create"
+          className="inline-flex items-center justify-center rounded-lg bg-red-600 px-5 py-3 font-medium text-white transition hover:bg-red-700"
         >
-          + Create Post
-        </a>
+          + Create News
+        </Link>
 
       </div>
 
-      <PostsTable posts={posts} />
+      {/* =====================================================
+          NEWS TABLE
+      ===================================================== */}
+
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+
+        <NewsTable posts={news} />
+
+      </div>
 
     </div>
-
   );
 }
