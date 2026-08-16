@@ -1,18 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { AdPosition } from "@prisma/client";
 
-const VALID_POSITIONS = [
-  "HEADER",
-  "HOME_TOP",
-  "HOME_MIDDLE",
-  "HOME_BOTTOM",
-  "SIDEBAR_TOP",
-  "SIDEBAR_MIDDLE",
-  "SIDEBAR_BOTTOM",
-  "ARTICLE_TOP",
-  "ARTICLE_MIDDLE",
-  "ARTICLE_BOTTOM",
-  "FOOTER",
+const validPositions = [
+  AdPosition.SIDEBAR_TOP_LEFT,
+  AdPosition.SIDEBAR_TOP_RIGHT,
+  AdPosition.POPUP,
 ] as const;
 
 const VALID_DEVICES = [
@@ -58,16 +51,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (
-      !VALID_POSITIONS.includes(
-        position as (typeof VALID_POSITIONS)[number]
-      )
-    ) {
-      return NextResponse.json(
-        { error: "Invalid advertisement position." },
-        { status: 400 }
-      );
-    }
+   if (
+  !validPositions.includes(
+    position as (typeof validPositions)[number]
+  )
+) {
+  return NextResponse.json(
+    {
+      error: "Invalid advertisement position.",
+    },
+    { status: 400 }
+  );
+}
 
     if (
       !VALID_DEVICES.includes(
@@ -188,8 +183,7 @@ export async function POST(request: NextRequest) {
               ? targetUrl.trim()
               : null,
 
-          position:
-            position as (typeof VALID_POSITIONS)[number],
+          position: position as AdPosition,
 
           device:
             device as (typeof VALID_DEVICES)[number],

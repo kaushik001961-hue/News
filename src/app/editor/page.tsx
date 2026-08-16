@@ -25,7 +25,7 @@ export default function EditorDashboardPage() {
           <div>
 
             <h1 className="text-4xl font-black tracking-tight">
-              EDITOR DASHBOARD
+              EDITOR  DASHBOARD
             </h1>
 
             <p className="mt-3 max-w-2xl text-lg text-blue-100">

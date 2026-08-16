@@ -2,6 +2,7 @@
 
 import { FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import AdvertisementBannerUploader from "@/components/advertisements/AdvertisementBannerUploader";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -11,18 +12,19 @@ import {
   ExternalLink,
 } from "lucide-react";
 
-const POSITIONS = [
-  { value: "HEADER", label: "Header" },
-  { value: "HOME_TOP", label: "Home — Top" },
-  { value: "HOME_MIDDLE", label: "Home — Middle" },
-  { value: "HOME_BOTTOM", label: "Home — Bottom" },
-  { value: "SIDEBAR_TOP", label: "Sidebar — Top" },
-  { value: "SIDEBAR_MIDDLE", label: "Sidebar — Middle" },
-  { value: "SIDEBAR_BOTTOM", label: "Sidebar — Bottom" },
-  { value: "ARTICLE_TOP", label: "Article — Top" },
-  { value: "ARTICLE_MIDDLE", label: "Article — Middle" },
-  { value: "ARTICLE_BOTTOM", label: "Article — Bottom" },
-  { value: "FOOTER", label: "Footer" },
+const AD_POSITIONS = [
+  {
+    value: "SIDEBAR_TOP_LEFT",
+    label: "Sidebar Top Left",
+  },
+  {
+    value: "SIDEBAR_TOP_RIGHT",
+    label: "Sidebar Top Right",
+  },
+  {
+    value: "POPUP",
+    label: "Popup Advertisement",
+  },
 ] as const;
 
 const DEVICES = [
@@ -32,6 +34,12 @@ const DEVICES = [
   { value: "TABLET", label: "Tablet" },
 ] as const;
 
+type AdPosition =
+  (typeof AD_POSITIONS)[number]["value"];
+
+type AdDevice =
+  (typeof DEVICES)[number]["value"];
+
 export default function CreateAdvertisementPage() {
   const router = useRouter();
 
@@ -40,16 +48,22 @@ export default function CreateAdvertisementPage() {
   const [image, setImage] = useState("");
   const [htmlCode, setHtmlCode] = useState("");
   const [targetUrl, setTargetUrl] = useState("");
-  const [position, setPosition] = useState("HOME_TOP");
-  const [device, setDevice] = useState("ALL");
+
+  // IMPORTANT:
+  // Only the two new sidebar positions are allowed.
+  const [position, setPosition] =
+    useState<AdPosition>("SIDEBAR_TOP_LEFT");
+
+  const [device, setDevice] =
+    useState<AdDevice>("ALL");
+
   const [priority, setPriority] = useState("1");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [active, setActive] = useState(true);
 
-  const [adType, setAdType] = useState<"IMAGE" | "HTML">(
-    "IMAGE"
-  );
+  const [adType, setAdType] =
+    useState<"IMAGE" | "HTML">("IMAGE");
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -80,31 +94,52 @@ export default function CreateAdvertisementPage() {
     setSaving(true);
 
     try {
+      /*
+       * createdById is intentionally NOT sent from
+       * the client.
+       *
+       * The API must determine the logged-in user
+       * from auth().
+       */
+
       const response = await fetch(
         "/api/advertisements",
         {
           method: "POST",
+
           headers: {
             "Content-Type": "application/json",
           },
+
           body: JSON.stringify({
             title: title.trim(),
             slug: slug.trim(),
+
             image:
               adType === "IMAGE"
                 ? image.trim() || null
                 : null,
+
             htmlCode:
               adType === "HTML"
                 ? htmlCode.trim() || null
                 : null,
+
             targetUrl:
               targetUrl.trim() || null,
+
             position,
             device,
-            priority: Number(priority) || 1,
-            startDate: startDate || null,
-            endDate: endDate || null,
+
+            priority:
+              Number(priority) || 1,
+
+            startDate:
+              startDate || null,
+
+            endDate:
+              endDate || null,
+
             active,
           }),
         }
@@ -135,7 +170,11 @@ export default function CreateAdvertisementPage() {
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="mx-auto max-w-5xl space-y-6">
-        {/* Header */}
+
+        {/* =====================================================
+            HEADER
+        ===================================================== */}
+
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <Link
@@ -143,6 +182,7 @@ export default function CreateAdvertisementPage() {
               className="mb-3 inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900"
             >
               <ArrowLeft size={16} />
+
               Back to Advertisements
             </Link>
 
@@ -157,6 +197,10 @@ export default function CreateAdvertisementPage() {
           </div>
         </div>
 
+        {/* =====================================================
+            ERROR
+        ===================================================== */}
+
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
             {error}
@@ -167,7 +211,11 @@ export default function CreateAdvertisementPage() {
           onSubmit={handleSubmit}
           className="space-y-6"
         >
-          {/* Basic Information */}
+
+          {/* ===================================================
+              BASIC INFORMATION
+          =================================================== */}
+
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-6">
               <h2 className="text-lg font-bold text-slate-900">
@@ -180,7 +228,9 @@ export default function CreateAdvertisementPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
+
               {/* Title */}
+
               <div className="md:col-span-2">
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Advertisement Title *
@@ -189,9 +239,7 @@ export default function CreateAdvertisementPage() {
                 <input
                   value={title}
                   onChange={(e) =>
-                    handleTitleChange(
-                      e.target.value
-                    )
+                    handleTitleChange(e.target.value)
                   }
                   required
                   placeholder="Example: ABC Business Promotion"
@@ -200,6 +248,7 @@ export default function CreateAdvertisementPage() {
               </div>
 
               {/* Slug */}
+
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Slug *
@@ -209,9 +258,7 @@ export default function CreateAdvertisementPage() {
                   value={slug}
                   onChange={(e) =>
                     setSlug(
-                      generateSlug(
-                        e.target.value
-                      )
+                      generateSlug(e.target.value)
                     )
                   }
                   required
@@ -221,6 +268,7 @@ export default function CreateAdvertisementPage() {
               </div>
 
               {/* Target URL */}
+
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Target URL
@@ -236,9 +284,7 @@ export default function CreateAdvertisementPage() {
                     type="url"
                     value={targetUrl}
                     onChange={(e) =>
-                      setTargetUrl(
-                        e.target.value
-                      )
+                      setTargetUrl(e.target.value)
                     }
                     placeholder="https://example.com"
                     className="w-full rounded-xl border border-slate-300 py-3 pl-10 pr-4 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
@@ -248,7 +294,16 @@ export default function CreateAdvertisementPage() {
             </div>
           </section>
 
-          {/* Advertisement Type */}
+<AdvertisementBannerUploader
+  value={image}
+  onChange={setImage}
+  position={position}
+/>
+
+          {/* ===================================================
+              ADVERTISEMENT CREATIVE
+          =================================================== */}
+
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-6">
               <h2 className="text-lg font-bold text-slate-900">
@@ -262,6 +317,9 @@ export default function CreateAdvertisementPage() {
             </div>
 
             <div className="mb-6 grid gap-4 sm:grid-cols-2">
+
+              {/* IMAGE */}
+
               <button
                 type="button"
                 onClick={() =>
@@ -286,6 +344,8 @@ export default function CreateAdvertisementPage() {
                   Use a banner image URL.
                 </div>
               </button>
+
+              {/* HTML */}
 
               <button
                 type="button"
@@ -312,6 +372,8 @@ export default function CreateAdvertisementPage() {
                 </div>
               </button>
             </div>
+
+            {/* IMAGE */}
 
             {adType === "IMAGE" ? (
               <div>
@@ -341,6 +403,8 @@ export default function CreateAdvertisementPage() {
                 )}
               </div>
             ) : (
+              /* HTML */
+
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   HTML Advertisement Code *
@@ -349,9 +413,7 @@ export default function CreateAdvertisementPage() {
                 <textarea
                   value={htmlCode}
                   onChange={(e) =>
-                    setHtmlCode(
-                      e.target.value
-                    )
+                    setHtmlCode(e.target.value)
                   }
                   required
                   rows={12}
@@ -362,7 +424,10 @@ export default function CreateAdvertisementPage() {
             )}
           </section>
 
-          {/* Placement */}
+          {/* ===================================================
+              PLACEMENT
+          =================================================== */}
+
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-6">
               <h2 className="text-lg font-bold text-slate-900">
@@ -376,7 +441,9 @@ export default function CreateAdvertisementPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
+
               {/* Position */}
+
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Position *
@@ -386,12 +453,12 @@ export default function CreateAdvertisementPage() {
                   value={position}
                   onChange={(e) =>
                     setPosition(
-                      e.target.value
+                      e.target.value as AdPosition
                     )
                   }
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                 >
-                  {POSITIONS.map((item) => (
+                  {AD_POSITIONS.map((item) => (
                     <option
                       key={item.value}
                       value={item.value}
@@ -403,6 +470,7 @@ export default function CreateAdvertisementPage() {
               </div>
 
               {/* Device */}
+
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Device *
@@ -412,7 +480,7 @@ export default function CreateAdvertisementPage() {
                   value={device}
                   onChange={(e) =>
                     setDevice(
-                      e.target.value
+                      e.target.value as AdDevice
                     )
                   }
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
@@ -429,6 +497,7 @@ export default function CreateAdvertisementPage() {
               </div>
 
               {/* Priority */}
+
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Priority
@@ -439,9 +508,7 @@ export default function CreateAdvertisementPage() {
                   min="1"
                   value={priority}
                   onChange={(e) =>
-                    setPriority(
-                      e.target.value
-                    )
+                    setPriority(e.target.value)
                   }
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                 />
@@ -449,7 +516,10 @@ export default function CreateAdvertisementPage() {
             </div>
           </section>
 
-          {/* Scheduling */}
+          {/* ===================================================
+              SCHEDULE
+          =================================================== */}
+
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="mb-6">
               <h2 className="text-lg font-bold text-slate-900">
@@ -463,6 +533,9 @@ export default function CreateAdvertisementPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
+
+              {/* Start */}
+
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
                   Start Date
@@ -472,13 +545,13 @@ export default function CreateAdvertisementPage() {
                   type="datetime-local"
                   value={startDate}
                   onChange={(e) =>
-                    setStartDate(
-                      e.target.value
-                    )
+                    setStartDate(e.target.value)
                   }
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                 />
               </div>
+
+              {/* End */}
 
               <div>
                 <label className="mb-2 block text-sm font-semibold text-slate-700">
@@ -489,9 +562,7 @@ export default function CreateAdvertisementPage() {
                   type="datetime-local"
                   value={endDate}
                   onChange={(e) =>
-                    setEndDate(
-                      e.target.value
-                    )
+                    setEndDate(e.target.value)
                   }
                   className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
                 />
@@ -499,7 +570,10 @@ export default function CreateAdvertisementPage() {
             </div>
           </section>
 
-          {/* Status */}
+          {/* ===================================================
+              STATUS
+          =================================================== */}
+
           <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -536,7 +610,10 @@ export default function CreateAdvertisementPage() {
             </div>
           </section>
 
-          {/* Actions */}
+          {/* ===================================================
+              ACTIONS
+          =================================================== */}
+
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <Link
               href="/admin/advertisements"

@@ -39,22 +39,14 @@ interface DashboardLayoutProps {
   user?: DashboardUser;
 }
 
-interface NavItem {
+interface NavigationItem {
   label: string;
   href: string;
   icon: ReactNode;
   roles: string[];
 }
 
-/* =========================================================
-   NAVIGATION
-========================================================= */
-
-const navigation: NavItem[] = [
-  // =====================================================
-  // ADMIN DASHBOARD
-  // =====================================================
-
+const navigation: NavigationItem[] = [
   {
     label: "Dashboard",
     href: "/admin",
@@ -62,123 +54,53 @@ const navigation: NavItem[] = [
     roles: ["ADMIN"],
   },
 
-  // =====================================================
-  // EDITOR DASHBOARD
-  // =====================================================
-
   {
-    label: "Dashboard",
+    label: "Editor Dashboard",
     href: "/editor",
     icon: <LayoutDashboard size={20} />,
     roles: ["EDITOR"],
   },
 
-  // =====================================================
-  // NEWS
-  // =====================================================
-
   {
-    label: "News",
-    href: "/admin/news",
+    label: "News / Posts",
+    href: "/admin/posts",
     icon: <Newspaper size={20} />,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "EDITOR"],
   },
-
-  {
-    label: "News",
-    href: "/editor/news",
-    icon: <Newspaper size={20} />,
-    roles: ["EDITOR"],
-  },
-
-  // =====================================================
-  // REPORTERS
-  // =====================================================
 
   {
     label: "Reporters",
     href: "/admin/reporters",
     icon: <Users size={20} />,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "EDITOR"],
   },
-
-  {
-    label: "Reporters",
-    href: "/editor/reporters",
-    icon: <Users size={20} />,
-    roles: ["EDITOR"],
-  },
-
-  // =====================================================
-  // CATEGORIES
-  // =====================================================
 
   {
     label: "Categories",
     href: "/admin/categories",
     icon: <FolderTree size={20} />,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "EDITOR"],
   },
-
-  {
-    label: "Categories",
-    href: "/editor/categories",
-    icon: <FolderTree size={20} />,
-    roles: ["EDITOR"],
-  },
-
-  // =====================================================
-  // ADVERTISEMENTS
-  // =====================================================
 
   {
     label: "Advertisements",
     href: "/admin/advertisements",
     icon: <Megaphone size={20} />,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "EDITOR"],
   },
-
-  {
-    label: "Advertisements",
-    href: "/editor/advertisements",
-    icon: <Megaphone size={20} />,
-    roles: ["EDITOR"],
-  },
-
-  // =====================================================
-  // ANALYTICS
-  // =====================================================
 
   {
     label: "Analytics",
     href: "/admin/analytics",
     icon: <BarChart3 size={20} />,
-    roles: ["ADMIN"],
+    roles: ["ADMIN", "EDITOR"],
   },
-
-  {
-    label: "Analytics",
-    href: "/editor/analytics",
-    icon: <BarChart3 size={20} />,
-    roles: ["EDITOR"],
-  },
-
-  // =====================================================
-  // SETTINGS
-  // =====================================================
 
   {
     label: "Settings",
     href: "/admin/settings",
     icon: <Settings size={20} />,
-    roles: ["ADMIN"],
-  },
-
-  {
-    label: "Settings",
-    href: "/editor/settings",
-    icon: <Settings size={20} />,
-    roles: ["EDITOR"],
+    roles: ["ADMIN", "EDITOR"],
   },
 ];
 /* =========================================================

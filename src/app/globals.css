@@ -4,6 +4,27 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@keyframes sideAdShine {
+  0% {
+    transform: translateX(-180%) rotate(12deg);
+    opacity: 0;
+  }
+
+  15% {
+    opacity: 1;
+  }
+
+  45% {
+    transform: translateX(500%) rotate(12deg);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(500%) rotate(12deg);
+    opacity: 0;
+  }
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -187,4 +208,200 @@
     break-after: page;
     page-break-after: always;
   }
+/* =========================================================
+   POPUP ADVERTISEMENT ANIMATION
+========================================================= */
+
+@keyframes popupAdOpening {
+  0% {
+    opacity: 0;
+    transform: scale(0.82) translateY(20px);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.02) translateY(0);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes popupAdClosing {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.88);
+  }
+}
+
+.popup-ad-opening {
+  animation:
+    popupAdOpening
+    450ms
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+.popup-ad-closing {
+  animation:
+    popupAdClosing
+    300ms
+    ease-in
+    both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popup-ad-opening,
+  .popup-ad-closing {
+    animation: none !important;
+  }
+}
+/* =========================================================
+   POPUP ADVERTISEMENT ANIMATIONS
+========================================================= */
+
+@keyframes popupAdOpening {
+  0% {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+
+  60% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes popupAdClosing {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.65);
+  }
+}
+
+.popup-ad-opening {
+  animation:
+    popupAdOpening
+    700ms
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+.popup-ad-closing {
+  animation:
+    popupAdClosing
+    450ms
+    cubic-bezier(0.4, 0, 1, 1)
+    both;
+}
+/* =========================================================
+   POPUP ADVERTISEMENT
+========================================================= */
+
+@keyframes popupAdOverlayIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes popupAdOverlayOut {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes popupAdZoomIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+
+  75% {
+    transform: scale(0.97);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes popupAdZoomOut {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  25% {
+    transform: scale(1.04);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(0.55);
+  }
+}
+
+.popup-ad-overlay-opening {
+  animation:
+    popupAdOverlayIn
+    450ms
+    ease-out
+    both;
+}
+
+.popup-ad-overlay-closing {
+  animation:
+    popupAdOverlayOut
+    600ms
+    ease-in
+    both;
+}
+
+.popup-ad-box-opening {
+  animation:
+    popupAdZoomIn
+    700ms
+    cubic-bezier(0.22, 1, 0.36, 1)
+    both;
+}
+
+.popup-ad-box-closing {
+  animation:
+    popupAdZoomOut
+    600ms
+    cubic-bezier(0.4, 0, 1, 1)
+    both;
+}
+
 }

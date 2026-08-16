@@ -3,52 +3,63 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { ArrowLeft, Save } from "lucide-react";
+import AdvertisementBannerUploader from "@/components/advertisements/AdvertisementBannerUploader";
 
 const positions = [
-  "HEADER",
-  "HOME_TOP",
-  "HOME_MIDDLE",
-  "HOME_BOTTOM",
-  "SIDEBAR_TOP",
-  "SIDEBAR_MIDDLE",
-  "SIDEBAR_BOTTOM",
-  "ARTICLE_TOP",
-  "ARTICLE_MIDDLE",
-  "ARTICLE_BOTTOM",
-  "FOOTER",
-];
+  "SIDEBAR_TOP_LEFT",
+  "SIDEBAR_TOP_RIGHT",
+] as const;
 
 const devices = [
   "ALL",
   "DESKTOP",
   "MOBILE",
   "TABLET",
-];
+] as const;
+
+type AdPosition = (typeof positions)[number];
+type AdDevice = (typeof devices)[number];
+
+interface AdvertisementForm {
+  title: string;
+  slug: string;
+  image: string;
+  htmlCode: string;
+  targetUrl: string;
+  position: AdPosition;
+  device: AdDevice;
+  priority: string;
+  active: boolean;
+  startDate: string;
+  endDate: string;
+}
 
 export default function CreateAdvertisementPage() {
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const [error, setError] =
-    useState("");
+  const [form, setForm] =
+    useState<AdvertisementForm>({
+      title: "",
+      slug: "",
+      image: "",
+      htmlCode: "",
+      targetUrl: "",
+      position: "SIDEBAR_TOP_LEFT",
+      device: "ALL",
+      priority: "1",
+      active: true,
+      startDate: "",
+      endDate: "",
+    });
 
-  const [form, setForm] = useState({
-    title: "",
-    slug: "",
-    image: "",
-    htmlCode: "",
-    targetUrl: "",
-    position: "HOME_TOP",
-    device: "ALL",
-    priority: "1",
-    active: true,
-    startDate: "",
-    endDate: "",
-  });
+  /* =====================================================
+     UPDATE FIELD
+  ===================================================== */
 
-  function updateField(
-    field: string,
-    value: string | boolean
+  function updateField<K extends keyof AdvertisementForm>(
+    field: K,
+    value: AdvertisementForm[K]
   ) {
     setForm((current) => ({
       ...current,
@@ -56,9 +67,11 @@ export default function CreateAdvertisementPage() {
     }));
   }
 
-  function generateSlug(
-    value: string
-  ) {
+  /* =====================================================
+     GENERATE SLUG
+  ===================================================== */
+
+  function generateSlug(value: string) {
     return value
       .toLowerCase()
       .trim()
@@ -66,9 +79,11 @@ export default function CreateAdvertisementPage() {
       .replace(/^-+|-+$/g, "");
   }
 
-  function handleTitleChange(
-    value: string
-  ) {
+  /* =====================================================
+     TITLE CHANGE
+  ===================================================== */
+
+  function handleTitleChange(value: string) {
     setForm((current) => ({
       ...current,
       title: value,
@@ -77,6 +92,10 @@ export default function CreateAdvertisementPage() {
         generateSlug(value),
     }));
   }
+
+  /* =====================================================
+     SUBMIT
+  ===================================================== */
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>
@@ -87,31 +106,121 @@ export default function CreateAdvertisementPage() {
     setLoading(true);
 
     try {
+      /* ===============================================
+         VALIDATION
+      =============================================== */
+
+      if (!form.title.trim()) {
+        throw new Error(
+          "Advertisement title is required."
+        );
+      }
+
+      if (!form.slug.trim()) {
+        throw new Error(
+          "Advertisement slug is required."
+        );
+      }
+
+      if (
+        !form.image.trim() &&
+        !form.htmlCode.trim()
+      ) {
+        throw new Error(
+          "Please provide either an Advertisement Image URL or HTML Advertisement code."
+        );
+      }
+
+      if (
+        form.startDate &&
+        form.endDate
+      ) {
+        const start =
+          new Date(form.startDate);
+
+        const end =
+          new Date(form.endDate);
+
+        if (end < start) {
+          throw new Error(
+            "End date cannot be earlier than start date."
+          );
+        }
+      }
+
+      /* ===============================================
+         VALIDATE POSITION
+      =============================================== */
+
+      if (
+        form.position !==
+          "SIDEBAR_TOP_LEFT" &&
+        form.position !==
+          "SIDEBAR_TOP_RIGHT"
+      ) {
+        throw new Error(
+          "Invalid advertisement position."
+        );
+      }
+
+      /* ===============================================
+         CREATE ADVERTISEMENT
+
+         IMPORTANT:
+         createdById is NOT sent from the client.
+
+         The API must obtain the authenticated
+         user's ID using auth().
+      =============================================== */
+
       const response = await fetch(
-        "/api/admin/advertisements",
+        "/api/advertisements",
         {
           method: "POST",
+
           headers: {
             "Content-Type":
               "application/json",
           },
+
           body: JSON.stringify({
-            title: form.title,
-            slug: form.slug,
-            image: form.image || null,
+            title:
+              form.title.trim(),
+
+            slug:
+              form.slug.trim(),
+
+            image:
+              form.image.trim() ||
+              null,
+
             htmlCode:
-              form.htmlCode || null,
+              form.htmlCode.trim() ||
+              null,
+
             targetUrl:
-              form.targetUrl || null,
-            position: form.position,
-            device: form.device,
+              form.targetUrl.trim() ||
+              null,
+
+            position:
+              form.position,
+
+            device:
+              form.device,
+
             priority:
               Number(form.priority) || 1,
-            active: form.active,
+
+            active:
+              form.active,
+
             startDate:
-              form.startDate || null,
+              form.startDate ||
+              null,
+
             endDate:
-              form.endDate || null,
+              form.endDate ||
+              null,
           }),
         }
       );
@@ -121,14 +230,23 @@ export default function CreateAdvertisementPage() {
 
       if (!response.ok) {
         throw new Error(
-          data.error ||
+          data?.error ||
             "Failed to create advertisement."
         );
       }
 
+      /* ===============================================
+         SUCCESS
+      =============================================== */
+
       window.location.href =
         "/editor/advertisements";
     } catch (err) {
+      console.error(
+        "CREATE ADVERTISEMENT ERROR:",
+        err
+      );
+
       setError(
         err instanceof Error
           ? err.message
@@ -139,20 +257,28 @@ export default function CreateAdvertisementPage() {
     }
   }
 
+  /* =====================================================
+     UI
+  ===================================================== */
+
   return (
     <div className="space-y-8">
 
-      {/* Header */}
+      {/* =================================================
+          HEADER
+      ================================================= */}
 
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 
         <div>
+
           <div className="mb-2">
             <Link
               href="/editor/advertisements"
               className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900"
             >
               <ArrowLeft size={16} />
+
               Back to Advertisements
             </Link>
           </div>
@@ -165,16 +291,35 @@ export default function CreateAdvertisementPage() {
             Create a new portal advertisement
             campaign.
           </p>
+
         </div>
 
       </div>
 
-      {/* Form */}
+{/* =================================================
+    FULL SIZE BANNER
+================================================= */}
+
+<AdvertisementBannerUploader
+  value={form.image}
+  onChange={(value) =>
+    updateField("image", value)
+  }
+  position={form.position}
+/>
+
+      {/* =================================================
+          FORM
+      ================================================= */}
 
       <form
         onSubmit={handleSubmit}
         className="space-y-6"
       >
+
+        {/* =================================================
+            BASIC INFORMATION
+        ================================================= */}
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
@@ -216,7 +361,9 @@ export default function CreateAdvertisementPage() {
                 onChange={(event) =>
                   updateField(
                     "slug",
-                    event.target.value
+                    generateSlug(
+                      event.target.value
+                    )
                   )
                 }
                 required
@@ -243,6 +390,22 @@ export default function CreateAdvertisementPage() {
                 placeholder="https://..."
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
               />
+
+              <p className="mt-1 text-xs text-slate-400">
+                Use a public image URL, such as a Cloudinary URL.
+              </p>
+
+              {/* Image Preview */}
+
+              {form.image.trim() && (
+                <div className="mt-4 overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                  <img
+                    src={form.image}
+                    alt="Advertisement preview"
+                    className="max-h-64 w-full object-contain"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Target URL */}
@@ -269,7 +432,9 @@ export default function CreateAdvertisementPage() {
 
         </div>
 
-        {/* Placement */}
+        {/* =================================================
+            PLACEMENT
+        ================================================= */}
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
@@ -277,7 +442,14 @@ export default function CreateAdvertisementPage() {
             Placement
           </h2>
 
+          <p className="mt-1 text-sm text-slate-500">
+            Advertisements can currently appear only in
+            the two sidebar top positions.
+          </p>
+
           <div className="mt-6 grid gap-6 md:grid-cols-3">
+
+            {/* Position */}
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -289,7 +461,8 @@ export default function CreateAdvertisementPage() {
                 onChange={(event) =>
                   updateField(
                     "position",
-                    event.target.value
+                    event.target
+                      .value as AdPosition
                   )
                 }
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
@@ -300,22 +473,17 @@ export default function CreateAdvertisementPage() {
                       key={position}
                       value={position}
                     >
-                      {position
-                        .replaceAll(
-                          "_",
-                          " "
-                        )
-                        .toLowerCase()
-                        .replace(
-                          /\b\w/g,
-                          (char) =>
-                            char.toUpperCase()
-                        )}
+                      {position ===
+                      "SIDEBAR_TOP_LEFT"
+                        ? "Sidebar Top Left"
+                        : "Sidebar Top Right"}
                     </option>
                   )
                 )}
               </select>
             </div>
+
+            {/* Device */}
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -327,7 +495,8 @@ export default function CreateAdvertisementPage() {
                 onChange={(event) =>
                   updateField(
                     "device",
-                    event.target.value
+                    event.target
+                      .value as AdDevice
                   )
                 }
                 className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
@@ -338,12 +507,16 @@ export default function CreateAdvertisementPage() {
                       key={device}
                       value={device}
                     >
-                      {device}
+                      {device === "ALL"
+                        ? "All Devices"
+                        : device}
                     </option>
                   )
                 )}
               </select>
             </div>
+
+            {/* Priority */}
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -368,7 +541,9 @@ export default function CreateAdvertisementPage() {
 
         </div>
 
-        {/* HTML */}
+        {/* =================================================
+            HTML ADVERTISEMENT
+        ================================================= */}
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
@@ -396,7 +571,9 @@ export default function CreateAdvertisementPage() {
 
         </div>
 
-        {/* Schedule */}
+        {/* =================================================
+            SCHEDULE
+        ================================================= */}
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
 
@@ -404,7 +581,14 @@ export default function CreateAdvertisementPage() {
             Schedule
           </h2>
 
+          <p className="mt-1 text-sm text-slate-500">
+            Leave the dates empty to make the
+            advertisement available without a date range.
+          </p>
+
           <div className="mt-6 grid gap-6 md:grid-cols-2">
+
+            {/* Start */}
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -423,6 +607,8 @@ export default function CreateAdvertisementPage() {
                 className="w-full rounded-xl border border-slate-300 px-4 py-3"
               />
             </div>
+
+            {/* End */}
 
             <div>
               <label className="mb-2 block text-sm font-medium text-slate-700">
@@ -443,6 +629,8 @@ export default function CreateAdvertisementPage() {
             </div>
 
           </div>
+
+          {/* Active */}
 
           <label className="mt-6 flex cursor-pointer items-center gap-3">
 
@@ -466,7 +654,9 @@ export default function CreateAdvertisementPage() {
 
         </div>
 
-        {/* Error */}
+        {/* =================================================
+            ERROR
+        ================================================= */}
 
         {error && (
           <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -474,7 +664,9 @@ export default function CreateAdvertisementPage() {
           </div>
         )}
 
-        {/* Actions */}
+        {/* =================================================
+            ACTIONS
+        ================================================= */}
 
         <div className="flex justify-end gap-3">
 
@@ -500,7 +692,6 @@ export default function CreateAdvertisementPage() {
         </div>
 
       </form>
-
     </div>
   );
 }

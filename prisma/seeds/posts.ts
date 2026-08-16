@@ -1,45 +1,127 @@
-
 import { PrismaClient } from "@prisma/client";
 
-export default async function seedPosts(prisma: PrismaClient) {
+export default async function seedPosts(
+  prisma: PrismaClient
+) {
   console.log("📰 Seeding Posts...");
 
-  const admin = await prisma.user.findUnique({
-    where: { email: "admin@news.com" },
+  const author = await prisma.user.findUnique({
+    where: {
+      email: "editor@news.com",
+    },
   });
 
-  const category = await prisma.category.findFirst();
-
-  if (!admin || !category) {
-    console.log("❌ Missing admin or category, skipping posts seed");
-    return;
+  if (!author) {
+    throw new Error(
+      "❌ editor@news.com not found. Seed users first."
+    );
   }
 
-  await prisma.post.createMany({
-    data: [
-      {
-        title: "Welcome to AGS News ADMIN DASHBOOARD",
-        slug: "welcome-to-ags-news-cms",
-        content: "This is your first seeded news article.",
-        excerpt: "AGS News CMS is now live.",
-        status: "PUBLISHED",
-        breaking: true,
-        featured: true,
-        authorId: admin.id,
-        categoryId: category.id,
+  const categories = await prisma.category.findMany();
+
+  const categoryMap = new Map(
+    categories.map((category) => [
+      category.slug,
+      category.id,
+    ])
+  );
+
+  const posts = [
+    {
+      title: "Gujarat Development News",
+      slug: "gujarat-development-news",
+      content:
+        "Latest development news from Gujarat.",
+      excerpt:
+        "Latest development news from Gujarat.",
+      categorySlug: "gujarat-news",
+    },
+    {
+      title: "India Latest News",
+      slug: "india-latest-news",
+      content:
+        "Latest news and updates from across India.",
+      excerpt:
+        "Latest news and updates from across India.",
+      categorySlug: "india-news",
+    },
+    {
+      title: "Technology Latest Updates",
+      slug: "technology-latest-updates",
+      content:
+        "Latest technology news and updates.",
+      excerpt:
+        "Latest technology news and updates.",
+      categorySlug: "technology",
+    },
+    {
+      title: "Sports Latest News",
+      slug: "sports-latest-news",
+      content:
+        "Latest sports news and updates.",
+      excerpt:
+        "Latest sports news and updates.",
+      categorySlug: "sports",
+    },
+  ];
+
+  for (const post of posts) {
+    const existing = await prisma.post.findUnique({
+      where: {
+        slug: post.slug,
       },
-      {
-        title: "Breaking: System Successfully Initialized",
-        slug: "system-initialized",
-        content: "Your Prisma + Next.js CMS is working correctly.",
-        status: "DRAFT",
+    });
+
+    if (existing) {
+      console.log(
+        `⏭️ Post already exists: ${post.slug}`
+      );
+
+      continue;
+    }
+
+    const categoryId =
+      categoryMap.get(post.categorySlug);
+
+    if (!categoryId) {
+      console.log(
+        `⚠️ Category not found: ${post.categorySlug}`
+      );
+
+      continue;
+    }
+
+    await prisma.post.create({
+      data: {
+        title: post.title,
+        slug: post.slug,
+        content: post.content,
+        excerpt: post.excerpt,
+
+        authorId: author.id,
+
+        categoryId,
+
+        status: "PUBLISHED",
+
+        publishedAt: new Date(),
+
         breaking: false,
         featured: false,
-        authorId: admin.id,
-        categoryId: category.id,
-      },
-    ],
-  });
+        hero: false,
+        trending: false,
+        editorsPick: false,
 
-  console.log("📰 Posts seeded successfully");
+        views: 0,
+        likes: 0,
+        shares: 0,
+      },
+    });
+
+    console.log(
+      `✅ Post seeded: ${post.title}`
+    );
+  }
+
+  console.log("📰 Posts seeding completed.");
 }

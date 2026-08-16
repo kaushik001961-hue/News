@@ -4,7 +4,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**", // Allows images from all external domain hosts
+        hostname: "**",
       },
       {
         protocol: "http",
@@ -12,6 +12,12 @@ const nextConfig = {
       },
     ],
   },
+
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "10mb",
+    },
+  },
 };
 
-module.exports = nextConfig; // Use 'export default nextConfig;' if using .mjs or ECMAScript modules
+module.exports = nextConfig;

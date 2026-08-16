@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma, PostStatus } from "@prisma/client";
+import { PostStatus } from "@prisma/client";
 
 /* ======================================================
    Base Interface
@@ -44,7 +44,8 @@ export interface NewsBaseInput {
    Create Interface
 ====================================================== */
 
-export interface CreateNewsInput extends NewsBaseInput {
+export interface CreateNewsInput
+  extends NewsBaseInput {
   authorId: string;
 }
 
@@ -52,7 +53,8 @@ export interface CreateNewsInput extends NewsBaseInput {
    Update Interface
 ====================================================== */
 
-export interface UpdateNewsInput extends NewsBaseInput {
+export interface UpdateNewsInput
+  extends NewsBaseInput {
   id: string;
 
   authorId: string;
@@ -67,53 +69,216 @@ export interface UpdateNewsInput extends NewsBaseInput {
 }
 
 /* ======================================================
+   REPORTER RESOLVER
+====================================================== */
+
+/**
+ * IMPORTANT DATABASE RELATION
+ *
+ * Post.assignedReporterId
+ *        ↓
+ * User.id
+ *
+ * Reporter.userId
+ *        ↓
+ * User.id
+ *
+ * Therefore:
+ *
+ * Reporter.id            ❌
+ * Reporter.reporterId    ❌
+ *
+ * Reporter.userId        ✅
+ *
+ * The News editor may provide:
+ *
+ * 1. Reporter.id
+ * 2. Reporter.reporterId
+ * 3. Reporter.userId
+ *
+ * This function resolves all of them to
+ * the actual User.id that Post requires.
+ */
+
+async function resolveReporterUserId(
+  value?: string | null
+): Promise<string | null> {
+  /* --------------------------------------------------
+     No reporter selected
+  -------------------------------------------------- */
+
+  if (!value) {
+    return null;
+  }
+
+  const reporterValue =
+    value.trim();
+
+  if (!reporterValue) {
+    return null;
+  }
+
+  /* --------------------------------------------------
+     Find Reporter
+
+     We support:
+
+     Reporter.id
+     Reporter.reporterId
+     Reporter.userId
+  -------------------------------------------------- */
+
+  const reporter =
+    await prisma.reporter.findFirst({
+      where: {
+        OR: [
+          {
+            id: reporterValue,
+          },
+          {
+            reporterId:
+              reporterValue,
+          },
+          {
+            userId:
+              reporterValue,
+          },
+        ],
+      },
+
+      select: {
+        id: true,
+        reporterId: true,
+        userId: true,
+        firstName: true,
+        lastName: true,
+      },
+    });
+
+  /* --------------------------------------------------
+     Reporter not found
+  -------------------------------------------------- */
+
+  if (!reporter) {
+    throw new Error(
+      `Reporter "${reporterValue}" was not found.`
+    );
+  }
+
+  /* --------------------------------------------------
+     Reporter exists but has no User account
+  -------------------------------------------------- */
+
+  if (!reporter.userId) {
+    const displayName =
+      reporter.reporterId ||
+      `${reporter.firstName} ${reporter.lastName}`.trim() ||
+      reporter.id;
+
+    throw new Error(
+      `Reporter "${displayName}" is not linked to a user account. Please link this reporter to a user before assigning the News.`
+    );
+  }
+
+  /* --------------------------------------------------
+     IMPORTANT
+
+     Post.assignedReporterId references
+     User.id.
+
+     Therefore return Reporter.userId,
+     NOT Reporter.id.
+  -------------------------------------------------- */
+
+  return reporter.userId;
+}
+
+/* ======================================================
    CREATE NEWS
 ====================================================== */
 
-export async function createNews(data: CreateNewsInput) {
+export async function createNews(
+  data: CreateNewsInput
+) {
+  const assignedReporterId =
+    await resolveReporterUserId(
+      data.assignedReporterId
+    );
+
   return prisma.post.create({
     data: {
       title: data.title,
+
       slug: data.slug,
+
       content: data.content,
 
       excerpt: data.excerpt,
 
       image: data.image,
+
       video: data.video,
 
-      categoryId: data.categoryId,
+      categoryId:
+        data.categoryId || null,
 
-      stateId: data.stateId,
-      districtId: data.districtId,
-      talukaId: data.talukaId,
-      village: data.village,
+      stateId:
+        data.stateId || null,
 
-      seoTitle: data.seoTitle,
-      seoDescription: data.seoDescription,
-      seoKeywords: data.seoKeywords,
-      canonicalUrl: data.canonicalUrl,
-      focusKeyword: data.focusKeyword,
+      districtId:
+        data.districtId || null,
 
-      featured: data.featured ?? false,
+      talukaId:
+        data.talukaId || null,
 
-      breaking: data.breaking ?? false,
+      village:
+        data.village || null,
 
-      trending: data.trending ?? false,
+      seoTitle:
+        data.seoTitle || null,
 
-      hero: data.hero ?? false,
+      seoDescription:
+        data.seoDescription || null,
 
-      editorsPick: data.editorsPick ?? false,
+      seoKeywords:
+        data.seoKeywords || null,
 
-      assignedReporterId: data.assignedReporterId,
+      canonicalUrl:
+        data.canonicalUrl || null,
 
-      assignedEditorId: data.assignedEditorId,
+      focusKeyword:
+        data.focusKeyword || null,
 
-      authorId: data.authorId,
+      featured:
+        data.featured ?? false,
 
-      status: data.status ?? "DRAFT",
+      breaking:
+        data.breaking ?? false,
 
-      submittedAt: data.status === "PENDING" ? new Date() : null,
+      trending:
+        data.trending ?? false,
+
+      hero:
+        data.hero ?? false,
+
+      editorsPick:
+        data.editorsPick ?? false,
+
+      assignedReporterId,
+
+      assignedEditorId:
+        data.assignedEditorId || null,
+
+      authorId:
+        data.authorId,
+
+      status:
+        data.status ?? "DRAFT",
+
+      submittedAt:
+        data.status === "PENDING"
+          ? new Date()
+          : null,
     },
   });
 }
@@ -122,54 +287,113 @@ export async function createNews(data: CreateNewsInput) {
    UPDATE NEWS
 ====================================================== */
 
-export async function updateNews(data: UpdateNewsInput) {
+export async function updateNews(
+  data: UpdateNewsInput
+) {
+  /*
+   * Resolve the selected Reporter to
+   * the associated User.id.
+   */
+  const assignedReporterId =
+    await resolveReporterUserId(
+      data.assignedReporterId
+    );
+
   return prisma.post.update({
     where: {
       id: data.id,
     },
 
     data: {
-      title: data.title,
-      slug: data.slug,
+      title:
+        data.title,
 
-      content: data.content,
-      excerpt: data.excerpt,
+      slug:
+        data.slug,
 
-      image: data.image,
-      video: data.video,
+      content:
+        data.content,
 
-      categoryId: data.categoryId,
+      excerpt:
+        data.excerpt,
 
-      stateId: data.stateId,
-      districtId: data.districtId,
-      talukaId: data.talukaId,
-      village: data.village,
+      image:
+        data.image,
 
-      seoTitle: data.seoTitle,
-      seoDescription: data.seoDescription,
-      seoKeywords: data.seoKeywords,
-      canonicalUrl: data.canonicalUrl,
-      focusKeyword: data.focusKeyword,
+      video:
+        data.video,
 
-      featured: data.featured,
-      breaking: data.breaking,
-      trending: data.trending,
-      hero: data.hero,
-      editorsPick: data.editorsPick,
+      categoryId:
+        data.categoryId || null,
 
-      status: data.status,
+      stateId:
+        data.stateId || null,
 
-      assignedReporterId: data.assignedReporterId,
+      districtId:
+        data.districtId || null,
 
-      assignedEditorId: data.assignedEditorId,
+      talukaId:
+        data.talukaId || null,
 
-      approvedById: data.approvedById,
+      village:
+        data.village || null,
 
-      reviewedById: data.reviewedById,
+      seoTitle:
+        data.seoTitle || null,
 
-      reviewedAt: data.reviewedAt,
+      seoDescription:
+        data.seoDescription || null,
 
-      submittedAt: data.submittedAt,
+      seoKeywords:
+        data.seoKeywords || null,
+
+      canonicalUrl:
+        data.canonicalUrl || null,
+
+      focusKeyword:
+        data.focusKeyword || null,
+
+      featured:
+        data.featured ?? false,
+
+      breaking:
+        data.breaking ?? false,
+
+      trending:
+        data.trending ?? false,
+
+      hero:
+        data.hero ?? false,
+
+      editorsPick:
+        data.editorsPick ?? false,
+
+      status:
+        data.status,
+
+      /*
+       * IMPORTANT:
+       *
+       * This is User.id.
+       *
+       * NOT Reporter.id.
+       */
+      assignedReporterId,
+
+      assignedEditorId:
+        data.assignedEditorId || null,
+
+      approvedById:
+        data.approvedById || null,
+
+      reviewedById:
+        data.reviewedById || null,
+
+      reviewedAt:
+        data.reviewedAt ?? null,
+
+      submittedAt:
+        data.submittedAt ?? null,
     },
   });
 }
@@ -178,7 +402,9 @@ export async function updateNews(data: UpdateNewsInput) {
    DELETE NEWS
 ====================================================== */
 
-export async function deleteNews(id: string) {
+export async function deleteNews(
+  id: string
+) {
   return prisma.post.delete({
     where: {
       id,
@@ -190,7 +416,10 @@ export async function deleteNews(id: string) {
    PUBLISH NEWS
 ====================================================== */
 
-export async function publishNews(id: string, approvedById: string) {
+export async function publishNews(
+  id: string,
+  approvedById: string
+) {
   return prisma.post.update({
     where: {
       id,
@@ -201,10 +430,15 @@ export async function publishNews(id: string, approvedById: string) {
 
       approvedById,
 
-      publishedAt: new Date(),
+      publishedAt:
+        new Date(),
     },
   });
 }
+
+/* ======================================================
+   APPROVE NEWS
+====================================================== */
 
 /* ======================================================
    APPROVE NEWS
@@ -215,16 +449,24 @@ export async function approveNews(
   editorId: string
 ) {
   return prisma.post.update({
-    where: { id },
+    where: {
+      id,
+    },
+
     data: {
-      status: "APPROVED", // ✅ Editor only approves
+      status: "PUBLISHED",
+
+      approvedById: editorId,
 
       reviewedById: editorId,
 
       reviewedAt: new Date(),
+
+      publishedAt: new Date(),
     },
   });
 }
+
 /* ======================================================
    REJECT NEWS
 ====================================================== */
@@ -244,9 +486,11 @@ export async function rejectNews(
 
       reviewedById,
 
-      reviewedAt: new Date(),
+      reviewedAt:
+        new Date(),
 
-      rejectReason: reason,
+      rejectReason:
+        reason || null,
     },
   });
 }
@@ -255,7 +499,9 @@ export async function rejectNews(
    ARCHIVE NEWS
 ====================================================== */
 
-export async function archiveNews(id: string) {
+export async function archiveNews(
+  id: string
+) {
   return prisma.post.update({
     where: {
       id,
@@ -271,7 +517,9 @@ export async function archiveNews(id: string) {
    RESTORE NEWS
 ====================================================== */
 
-export async function restoreNews(id: string) {
+export async function restoreNews(
+  id: string
+) {
   return prisma.post.update({
     where: {
       id,
@@ -280,10 +528,14 @@ export async function restoreNews(id: string) {
     data: {
       status: "DRAFT",
 
-      reviewedById: null,
-      reviewedAt: null,
+      reviewedById:
+        null,
 
-      rejectReason: null,
+      reviewedAt:
+        null,
+
+      rejectReason:
+        null,
     },
   });
 }
@@ -292,14 +544,31 @@ export async function restoreNews(id: string) {
    ASSIGN REPORTER
 ====================================================== */
 
-export async function assignReporter(id: string, reporterId: string) {
+export async function assignReporter(
+  id: string,
+  reporterId: string
+) {
+  /*
+   * reporterId may actually be:
+   *
+   * Reporter.id
+   * Reporter.reporterId
+   * Reporter.userId
+   *
+   * Resolve it to User.id.
+   */
+  const assignedReporterId =
+    await resolveReporterUserId(
+      reporterId
+    );
+
   return prisma.post.update({
     where: {
       id,
     },
 
     data: {
-      assignedReporterId: reporterId,
+      assignedReporterId,
     },
   });
 }
@@ -308,14 +577,18 @@ export async function assignReporter(id: string, reporterId: string) {
    ASSIGN EDITOR
 ====================================================== */
 
-export async function assignEditor(id: string, editorId: string) {
+export async function assignEditor(
+  id: string,
+  editorId: string
+) {
   return prisma.post.update({
     where: {
       id,
     },
 
     data: {
-      assignedEditorId: editorId,
+      assignedEditorId:
+        editorId || null,
     },
   });
 }
@@ -327,71 +600,122 @@ export async function assignEditor(id: string, editorId: string) {
 export async function duplicateNews(
   id: string
 ) {
-  const article = await prisma.post.findUnique({
-    where: {
-      id,
-    },
+  const article =
+    await prisma.post.findUnique({
+      where: {
+        id,
+      },
 
-    include: {
-      tags: true,
-    },
-  });
+      include: {
+        tags: true,
+      },
+    });
 
   if (!article) {
-    throw new Error("Article not found.");
+    throw new Error(
+      "Article not found."
+    );
   }
+
+  /*
+   * Existing assignedReporterId is already
+   * a User.id because Post.assignedReporterId
+   * references User.id.
+   *
+   * Therefore it can safely be copied.
+   */
+  const assignedReporterId =
+    article.assignedReporterId;
 
   return prisma.post.create({
     data: {
-      title: `${article.title} (Copy)`,
+      title:
+        `${article.title} (Copy)`,
 
-      slug: `${article.slug}-${Date.now()}`,
+      slug:
+        `${article.slug}-${Date.now()}`,
 
-      content: article.content,
+      content:
+        article.content,
 
-      excerpt: article.excerpt,
+      excerpt:
+        article.excerpt,
 
-      image: article.image,
-      video: article.video,
+      image:
+        article.image,
 
-      categoryId: article.categoryId,
+      video:
+        article.video,
 
-      stateId: article.stateId,
-      districtId: article.districtId,
-      talukaId: article.talukaId,
-      village: article.village,
+      categoryId:
+        article.categoryId,
 
-      seoTitle: article.seoTitle,
-      seoDescription: article.seoDescription,
-      seoKeywords: article.seoKeywords,
-      canonicalUrl: article.canonicalUrl,
-      focusKeyword: article.focusKeyword,
+      stateId:
+        article.stateId,
 
-      featured: false,
-      breaking: false,
-      trending: false,
-      hero: false,
-      editorsPick: false,
+      districtId:
+        article.districtId,
 
-      status: "DRAFT",
+      talukaId:
+        article.talukaId,
 
-      authorId: article.authorId,
+      village:
+        article.village,
 
-      assignedReporterId:
-        article.assignedReporterId,
+      seoTitle:
+        article.seoTitle,
+
+      seoDescription:
+        article.seoDescription,
+
+      seoKeywords:
+        article.seoKeywords,
+
+      canonicalUrl:
+        article.canonicalUrl,
+
+      focusKeyword:
+        article.focusKeyword,
+
+      featured:
+        false,
+
+      breaking:
+        false,
+
+      trending:
+        false,
+
+      hero:
+        false,
+
+      editorsPick:
+        false,
+
+      status:
+        "DRAFT",
+
+      authorId:
+        article.authorId,
+
+      assignedReporterId,
 
       assignedEditorId:
         article.assignedEditorId,
 
       tags: {
-        connect: article.tags.map((tag) => ({
-          id: tag.id,
-        })),
+        connect:
+          article.tags.map(
+            (tag) => ({
+              id: tag.id,
+            })
+          ),
       },
     },
 
     include: {
       tags: true,
+
       category: true,
     },
   });
@@ -401,7 +725,10 @@ export async function duplicateNews(
    BULK STATUS UPDATE
 ====================================================== */
 
-export async function bulkUpdateStatus(ids: string[], status: PostStatus) {
+export async function bulkUpdateStatus(
+  ids: string[],
+  status: PostStatus
+) {
   return prisma.post.updateMany({
     where: {
       id: {
@@ -419,7 +746,10 @@ export async function bulkUpdateStatus(ids: string[], status: PostStatus) {
    BULK FEATURE
 ====================================================== */
 
-export async function bulkFeature(ids: string[], featured: boolean) {
+export async function bulkFeature(
+  ids: string[],
+  featured: boolean
+) {
   return prisma.post.updateMany({
     where: {
       id: {
@@ -437,7 +767,10 @@ export async function bulkFeature(ids: string[], featured: boolean) {
    BULK BREAKING
 ====================================================== */
 
-export async function bulkBreaking(ids: string[], breaking: boolean) {
+export async function bulkBreaking(
+  ids: string[],
+  breaking: boolean
+) {
   return prisma.post.updateMany({
     where: {
       id: {
@@ -455,7 +788,10 @@ export async function bulkBreaking(ids: string[], breaking: boolean) {
    BULK TRENDING
 ====================================================== */
 
-export async function bulkTrending(ids: string[], trending: boolean) {
+export async function bulkTrending(
+  ids: string[],
+  trending: boolean
+) {
   return prisma.post.updateMany({
     where: {
       id: {
@@ -473,7 +809,10 @@ export async function bulkTrending(ids: string[], trending: boolean) {
    BULK HERO
 ====================================================== */
 
-export async function bulkHero(ids: string[], hero: boolean) {
+export async function bulkHero(
+  ids: string[],
+  hero: boolean
+) {
   return prisma.post.updateMany({
     where: {
       id: {
@@ -491,7 +830,10 @@ export async function bulkHero(ids: string[], hero: boolean) {
    BULK EDITOR'S PICK
 ====================================================== */
 
-export async function bulkEditorsPick(ids: string[], editorsPick: boolean) {
+export async function bulkEditorsPick(
+  ids: string[],
+  editorsPick: boolean
+) {
   return prisma.post.updateMany({
     where: {
       id: {
@@ -509,7 +851,9 @@ export async function bulkEditorsPick(ids: string[], editorsPick: boolean) {
    BULK DELETE
 ====================================================== */
 
-export async function bulkDelete(ids: string[]) {
+export async function bulkDelete(
+  ids: string[]
+) {
   return prisma.post.deleteMany({
     where: {
       id: {

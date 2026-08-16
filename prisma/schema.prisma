@@ -8,22 +8,22 @@ datasource db {
 }
 
 model User {
-  id                    String         @id @default(cuid())
+  id                    String          @id @default(cuid())
   name                  String
-  email                 String         @unique
+  email                 String          @unique
   password              String
   role                  Role
-  createdAt             DateTime       @default(now())
-  updatedAt             DateTime       @updatedAt
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
   image                 String?
   phone                 String?
-  status                UserStatus     @default(ACTIVE)
+  status                UserStatus      @default(ACTIVE)
   bio                   String?
   designation           String?
   facebook              String?
   instagram             String?
   linkedin              String?
-  slug                  String?        @unique
+  slug                  String?         @unique
   twitter               String?
   website               String?
   youtube               String?
@@ -34,15 +34,16 @@ model User {
   uploadedMedia         Media[]
   newsRevisions         NewsRevision[]
   notifications         Notification[]
-  approvedPosts         Post[]         @relation("ApprovedPosts")
-  assignedPosts         Post[]         @relation("AssignedEditors")
-  assignedReporterPosts Post[]         @relation("AssignedReporters")
+  approvedPosts         Post[]          @relation("ApprovedPosts")
+  assignedPosts         Post[]          @relation("AssignedEditors")
+  assignedReporterPosts Post[]          @relation("AssignedReporters")
   posts                 Post[]
-  reviewedPosts         Post[]         @relation("ReviewedPosts")
+  reviewedPosts         Post[]          @relation("ReviewedPosts")
   PostActivity          PostActivity[]
   editedVersions        PostVersion[]
   reactions             Reaction[]
   reporter              Reporter?
+  createdAdvertisements Advertisement[] @relation("CreatedAdvertisements")
 }
 
 model Category {
@@ -263,179 +264,93 @@ model Tag {
 
 model Post {
   id                 String         @id @default(cuid())
-
-  // ===========================
-  // Basic Information
-  // ===========================
-
   title              String
-  slug               String         @unique
   content            String
-  excerpt            String?
-
-  // Existing featured image
   image              String?
-
-  // Existing video
-  video              String?
-
+  slug               String         @unique
   status             PostStatus     @default(DRAFT)
-
-  // ===========================
-  // Author
-  // ===========================
-
   authorId           String
-
   createdAt          DateTime       @default(now())
   updatedAt          DateTime       @updatedAt
-  publishedAt        DateTime?
-
-  // Auto Save Recommendation
-  lastDraftAt        DateTime?
-
-  // ===========================
-  // Category
-  // ===========================
-
   categoryId         String?
-
-  // ===========================
-  // Location
-  // ===========================
-
-  stateId            String?
-  districtId         String?
-  talukaId           String?
-  village            String?
-  geography          Geography?
-
-  // ===========================
-  // Homepage Options
-  // ===========================
-
   breaking           Boolean        @default(false)
   featured           Boolean        @default(false)
-  hero               Boolean        @default(false)
-  trending           Boolean        @default(false)
-  editorsPick        Boolean        @default(false)
-
-  // ===========================
-  // SEO
-  // ===========================
-
-  seoTitle           String?
+  talukaId           String?
+  video              String?
+  districtId         String?
+  stateId            String?
+  village            String?
+  geography          Geography?
+  excerpt            String?
+  publishedAt        DateTime?
   seoDescription     String?
-  seoKeywords        String?
-  focusKeyword       String?
-  canonicalUrl       String?
-
-  // ===========================
-  // Analytics
-  // ===========================
-
+  seoTitle           String?
   views              Int            @default(0)
+  canonicalUrl       String?
+  editorsPick        Boolean        @default(false)
+  focusKeyword       String?
+  hero               Boolean        @default(false)
   likes              Int            @default(0)
+  seoKeywords        String?
   shares             Int            @default(0)
-
-  // ===========================
-  // Video Metadata
-  // ===========================
-
-  videoThumbnail     String?
-  videoDuration      Int?
-  videoType          String?
-
-  // ===========================
-  // Editorial Workflow
-  // ===========================
-
-  submittedAt        DateTime?
-  reviewedAt         DateTime?
-  rejectedAt         DateTime?
-
-  rejectReason       String?
-  reviewComment      String?
-
+  trending           Boolean        @default(false)
   approvedById       String?
-  reviewedById       String?
-
   assignedEditorId   String?
   assignedReporterId String?
-
-  // ===========================
-  // Relations
-  // ===========================
-
-  author             User           @relation(fields: [authorId], references: [id])
-
-  approvedBy         User?          @relation("ApprovedPosts", fields: [approvedById], references: [id])
-
-  reviewedBy         User?          @relation("ReviewedPosts", fields: [reviewedById], references: [id])
-
-  assignedEditor     User?          @relation("AssignedEditors", fields: [assignedEditorId], references: [id])
-
-  assignedReporter   User?          @relation("AssignedReporters", fields: [assignedReporterId], references: [id])
-
-  category           Category?      @relation(fields: [categoryId], references: [id])
-
-  state              State?         @relation(fields: [stateId], references: [id])
-
-  district           District?      @relation(fields: [districtId], references: [id])
-
-  taluka             Taluka?        @relation(fields: [talukaId], references: [id])
-
+  rejectReason       String?
+  rejectedAt         DateTime?
+  reviewComment      String?
+  reviewedAt         DateTime?
+  reviewedById       String?
+  submittedAt        DateTime?
+  lastDraftAt        DateTime?
+  videoDuration      Int?
+  videoThumbnail     String?
+  videoType          String?
   comments           Comment[]
+  approvedBy         User?          @relation("ApprovedPosts", fields: [approvedById], references: [id])
+  assignedEditor     User?          @relation("AssignedEditors", fields: [assignedEditorId], references: [id])
+  assignedReporter   User?          @relation("AssignedReporters", fields: [assignedReporterId], references: [id])
+  author             User           @relation(fields: [authorId], references: [id])
+  category           Category?      @relation(fields: [categoryId], references: [id])
+  district           District?      @relation(fields: [districtId], references: [id])
+  reviewedBy         User?          @relation("ReviewedPosts", fields: [reviewedById], references: [id])
+  state              State?         @relation(fields: [stateId], references: [id])
+  taluka             Taluka?        @relation(fields: [talukaId], references: [id])
   activities         PostActivity[]
-  versions           PostVersion[]
-
-  tags               Tag[]          @relation("PostToTag")
-
-  // Gallery (Recommendation)
   gallery            PostImage[]
+  versions           PostVersion[]
+  tags               Tag[]          @relation("PostToTag")
 
   @@index([status])
   @@index([authorId])
   @@index([categoryId])
-
   @@index([stateId])
   @@index([districtId])
   @@index([talukaId])
-
   @@index([createdAt])
   @@index([publishedAt])
-
   @@index([breaking])
   @@index([featured])
   @@index([hero])
   @@index([trending])
-
   @@index([reviewedById])
   @@index([approvedById])
   @@index([assignedEditorId])
   @@index([assignedReporterId])
 }
 
-
 model PostImage {
-  id         String   @id @default(cuid())
-
-  postId     String
-
-  image      String
-
-  caption    String?
-
-  altText    String?
-
-  sortOrder  Int      @default(0)
-
-  createdAt  DateTime @default(now())
-
-  post       Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+  id        String   @id @default(cuid())
+  postId    String
+  image     String
+  caption   String?
+  altText   String?
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 
   @@index([postId])
-
   @@index([sortOrder])
 }
 
@@ -485,27 +400,40 @@ model Comment {
 }
 
 model Advertisement {
-  id             String         @id @default(cuid())
-  title          String
-  slug           String         @unique
-  image          String?
-  htmlCode       String?
-  targetUrl      String?
-  position       AdPosition
-  device         AdDevice       @default(ALL)
-  priority       Int            @default(1)
-  active         Boolean        @default(true)
-  impressions    Int            @default(0)
-  clicks         Int            @default(0)
-  startDate      DateTime?
-  endDate        DateTime?
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  id String @id @default(cuid())
+
+  title String
+  slug  String @unique
+
+  image     String?
+  htmlCode  String?
+  targetUrl String?
+
+  position AdPosition
+  device   AdDevice   @default(ALL)
+
+  priority Int     @default(1)
+  active   Boolean @default(true)
+
+  impressions Int @default(0)
+  clicks      Int @default(0)
+
+  startDate DateTime?
+  endDate   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdById String?
+
+  createdBy User? @relation("CreatedAdvertisements", fields: [createdById], references: [id], onDelete: SetNull)
+
   clicksLog      AdClick[]
   impressionsLog AdImpression[]
 
   @@index([position])
   @@index([active])
+  @@index([createdById])
 }
 
 model BreakingNews {
@@ -598,7 +526,6 @@ model PostVersion {
   @@index([postId])
   @@index([editedById])
 }
-
 
 model Reporter {
   id                      String                          @id @default(cuid())
@@ -856,11 +783,10 @@ enum Role {
 enum PostStatus {
   DRAFT
   PENDING
-  APPROVED
+  UNDER_REVIEW
   PUBLISHED
   REJECTED
   ARCHIVED
-  SCHEDULED
 }
 
 enum Geography {
@@ -879,17 +805,9 @@ enum UserStatus {
 }
 
 enum AdPosition {
-  HEADER
-  HOME_TOP
-  HOME_MIDDLE
-  HOME_BOTTOM
-  SIDEBAR_TOP
-  SIDEBAR_MIDDLE
-  SIDEBAR_BOTTOM
-  ARTICLE_TOP
-  ARTICLE_MIDDLE
-  ARTICLE_BOTTOM
-  FOOTER
+  SIDEBAR_TOP_LEFT
+  SIDEBAR_TOP_RIGHT
+  POPUP
 }
 
 enum DeviceType {

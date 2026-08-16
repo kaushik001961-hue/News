@@ -52,7 +52,7 @@ export default async function StatsCards() {
 
     prisma.post.count({
       where: {
-        status: "SCHEDULED",
+       status: "PENDING",
       },
     }),
 

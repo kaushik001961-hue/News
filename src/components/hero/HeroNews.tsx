@@ -1,155 +1,711 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useState } from "react";
 import {
   ChevronLeft,
   ChevronRight,
+  Play,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
 
 interface HeroPost {
   id: string;
   title: string;
   slug: string;
-  excerpt?: string | null;
   image?: string | null;
+  video?: string | null;
+  excerpt?: string | null;
+  category?: {
+    id?: string;
+    name: string;
+    slug?: string;
+  } | null;
 }
 
-interface Props {
+interface HeroNewsProps {
   posts: HeroPost[];
 }
 
+/* =========================================================
+   YOUTUBE URL → EMBED URL
+========================================================= */
+
+function getYouTubeEmbedUrl(
+  url?: string | null
+) {
+  if (!url) return null;
+
+  try {
+    const parsed = new URL(url);
+
+    let videoId = "";
+
+    /* -------------------------------------------------------
+       youtube.com/watch?v=...
+    ------------------------------------------------------- */
+
+    if (
+      parsed.hostname === "www.youtube.com" ||
+      parsed.hostname === "youtube.com" ||
+      parsed.hostname === "m.youtube.com"
+    ) {
+      videoId =
+        parsed.searchParams.get("v") || "";
+
+      /* /shorts/VIDEO_ID */
+
+      if (
+        !videoId &&
+        parsed.pathname.startsWith("/shorts/")
+      ) {
+        videoId =
+          parsed.pathname.split("/shorts/")[1] ||
+          "";
+      }
+
+      /* /embed/VIDEO_ID */
+
+      if (
+        !videoId &&
+        parsed.pathname.startsWith("/embed/")
+      ) {
+        videoId =
+          parsed.pathname.split("/embed/")[1] ||
+          "";
+      }
+
+      /* /live/VIDEO_ID */
+
+      if (
+        !videoId &&
+        parsed.pathname.startsWith("/live/")
+      ) {
+        videoId =
+          parsed.pathname.split("/live/")[1] ||
+          "";
+      }
+    }
+
+    /* -------------------------------------------------------
+       youtu.be/VIDEO_ID
+    ------------------------------------------------------- */
+
+    if (
+      parsed.hostname === "youtu.be"
+    ) {
+      videoId =
+        parsed.pathname.replace(
+          /^\/+/,
+          ""
+        );
+    }
+
+    if (!videoId) {
+      return null;
+    }
+
+    /* Remove accidental query/path data */
+
+    videoId =
+      videoId.split("&")[0]
+        .split("?")[0]
+        .split("/")[0];
+
+    if (!videoId) {
+      return null;
+    }
+
+    return (
+      `https://www.youtube.com/embed/${videoId}` +
+      `?autoplay=1` +
+      `&mute=1` +
+      `&rel=0` +
+      `&playsinline=1` +
+      `&enablejsapi=1`
+    );
+  } catch {
+    return null;
+  }
+}
+
+/* =========================================================
+   HERO NEWS
+========================================================= */
+
 export default function HeroNews({
   posts,
-}: Props) {
-  const [current, setCurrent] = useState(0);
+}: HeroNewsProps) {
+  const [current, setCurrent] =
+    useState(0);
 
-  useEffect(() => {
-    if (!posts?.length) return;
+  const [muted, setMuted] =
+    useState(true);
 
-    const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % posts.length);
-    }, 5000);
-
-    return () => clearInterval(timer);
-  }, [posts]);
+  /* =======================================================
+     EMPTY STATE
+  ======================================================= */
 
   if (!posts || posts.length === 0) {
-    return (
-      <section className="h-[90vh] flex items-center justify-center bg-slate-900 text-white">
-        <h2 className="text-3xl font-bold">
-          No Featured News Available
-        </h2>
-      </section>
+    return null;
+  }
+
+  /* =======================================================
+     CURRENT POST
+  ======================================================= */
+
+  const post =
+    posts[current] || posts[0];
+
+  /* =======================================================
+     VIDEO
+  ======================================================= */
+
+  const videoUrl =
+    getYouTubeEmbedUrl(post.video);
+
+  /* =======================================================
+     NEXT
+  ======================================================= */
+
+  function nextSlide() {
+    setCurrent(
+      (previous) =>
+        (previous + 1) % posts.length
     );
   }
 
-  const post = posts[current];
+  /* =======================================================
+     PREVIOUS
+  ======================================================= */
 
-  const nextSlide = () => {
-    setCurrent((prev) => (prev + 1) % posts.length);
-  };
-
-  const prevSlide = () => {
-    setCurrent((prev) =>
-      prev === 0 ? posts.length - 1 : prev - 1
+  function previousSlide() {
+    setCurrent(
+      (previous) =>
+        (previous - 1 + posts.length) %
+        posts.length
     );
-  };
+  }
+
+  /* =======================================================
+     AUTO SLIDE
+     
+     IMPORTANT:
+     
+     Do not automatically move away from a video too
+     quickly. Give video users enough time to watch.
+  ======================================================= */
+
+  useEffect(() => {
+    const currentPost =
+      posts[current];
+
+    /*
+     * If the current Hero contains a video,
+     * allow it to remain visible for longer.
+     */
+    const delay =
+      currentPost?.video
+        ? 30000
+        : 7000;
+
+    const timer =
+      setTimeout(() => {
+        setCurrent(
+          (previous) =>
+            (previous + 1) %
+            posts.length
+        );
+      }, delay);
+
+    return () => {
+      clearTimeout(timer);
+    };
+  }, [
+    current,
+    posts,
+  ]);
+
+  /* =======================================================
+     VIDEO CHANGE KEY
+     
+     Changing the iframe key forces YouTube to start
+     the new Hero video.
+  ======================================================= */
+
+  const videoKey =
+    `${post.id}-${current}`;
 
   return (
-    <section className="relative h-[90vh] overflow-hidden">
+    <section
+      className="
+        relative
+        w-full
+        overflow-hidden
+        bg-slate-950
+      "
+    >
+      {/* ===================================================
+          HERO CONTAINER
+      =================================================== */}
 
-      <AnimatePresence mode="wait">
+      <div
+        className="
+          relative
+          mx-auto
+          max-w-[1600px]
+          overflow-hidden
+          bg-black
+        "
+      >
+        {/* =================================================
+            MEDIA
+        ================================================= */}
 
-        <motion.div
-          key={post.id}
-          initial={{ opacity: 0, scale: 1.05 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.8 }}
-          className="absolute inset-0"
+        <div
+          className="
+            relative
+            aspect-[16/9]
+            min-h-[420px]
+            w-full
+            overflow-hidden
+            sm:min-h-[500px]
+            lg:aspect-[21/9]
+            lg:min-h-[560px]
+          "
         >
-          <Image
-            src={post.image || "/placeholder.jpg"}
-            alt={post.title}
-            fill
-            priority
-            className="object-cover"
-          />
-        </motion.div>
+          {/* ===============================================
+              YOUTUBE VIDEO
+          =============================================== */}
 
-      </AnimatePresence>
+          {videoUrl ? (
+            <>
+              <iframe
+                key={videoKey}
+                src={videoUrl}
+                title={post.title}
+                className="
+                  absolute
+                  inset-0
+                  h-full
+                  w-full
+                  border-0
+                  object-cover
+                "
+                allow="
+                  autoplay;
+                  encrypted-media;
+                  picture-in-picture;
+                  fullscreen
+                "
+                allowFullScreen
+              />
 
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/20" />
+              {/* VIDEO OVERLAY */}
 
-      <div className="relative z-20 max-w-7xl mx-auto h-full flex items-center px-6">
+              <div
+                className="
+                  pointer-events-none
+                  absolute
+                  inset-0
+                  bg-gradient-to-t
+                  from-black/90
+                  via-black/20
+                  to-black/10
+                "
+              />
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-3xl"
-        >
-          <span className="inline-block bg-red-600 text-white px-5 py-2 rounded-full text-sm font-semibold">
-            BREAKING NEWS
-          </span>
+              {/* LIVE VIDEO BADGE */}
 
-          <h1 className="text-5xl lg:text-7xl font-bold text-white mt-6 leading-tight">
-            {post.title}
-          </h1>
+              <div
+                className="
+                  absolute
+                  left-4
+                  top-4
+                  z-20
+                  flex
+                  items-center
+                  gap-2
+                  rounded-full
+                  bg-red-600
+                  px-4
+                  py-2
+                  text-xs
+                  font-bold
+                  uppercase
+                  tracking-wide
+                  text-white
+                  shadow-xl
+                "
+              >
+                <span
+                  className="
+                    h-2
+                    w-2
+                    animate-pulse
+                    rounded-full
+                    bg-white
+                  "
+                />
 
-          <p className="text-gray-200 mt-6 text-lg">
-            {post.excerpt ||
-              "Stay informed with trusted news and breaking stories from around the world."}
-          </p>
+                Video
+              </div>
 
-          <Link
-            href={`/news/${post.slug}`}
-            className="inline-flex mt-8 px-8 py-4 rounded-full bg-red-600 hover:bg-red-700 transition text-white font-semibold"
+              {/* AUTOPLAY INFO */}
+
+              <div
+                className="
+                  absolute
+                  right-4
+                  top-4
+                  z-20
+                  flex
+                  items-center
+                  gap-2
+                  rounded-full
+                  bg-black/60
+                  px-3
+                  py-2
+                  text-xs
+                  text-white
+                  backdrop-blur-sm
+                "
+              >
+                {muted ? (
+                  <>
+                    <VolumeX size={14} />
+                    Muted
+                  </>
+                ) : (
+                  <>
+                    <Volume2 size={14} />
+                    Sound
+                  </>
+                )}
+              </div>
+            </>
+          ) : (
+            /* =============================================
+               FEATURED IMAGE FALLBACK
+            ============================================= */
+
+            <Link
+              href={`/news/${post.slug}`}
+              className="absolute inset-0"
+            >
+              <Image
+                src={
+                  post.image ||
+                  "/placeholder.jpg"
+                }
+                alt={post.title}
+                fill
+                priority
+                sizes="
+                  100vw
+                "
+                className="
+                  object-cover
+                  transition
+                  duration-700
+                "
+              />
+
+              {/* IMAGE OVERLAY */}
+
+              <div
+                className="
+                  absolute
+                  inset-0
+                  bg-gradient-to-t
+                  from-black/90
+                  via-black/30
+                  to-transparent
+                "
+              />
+            </Link>
+          )}
+
+          {/* =================================================
+              TEXT CONTENT
+          ================================================= */}
+
+          <div
+            className="
+              absolute
+              inset-x-0
+              bottom-0
+              z-20
+              px-5
+              pb-8
+              sm:px-8
+              sm:pb-10
+              lg:px-12
+              lg:pb-12
+            "
           >
-            Read Full Story →
-          </Link>
-        </motion.div>
+            <div
+              className="
+                max-w-4xl
+              "
+            >
+              {/* CATEGORY */}
 
+              {post.category?.name && (
+                <div className="mb-3">
+                  <span
+                    className="
+                      inline-flex
+                      rounded-full
+                      bg-red-600
+                      px-4
+                      py-2
+                      text-xs
+                      font-bold
+                      uppercase
+                      tracking-wide
+                      text-white
+                    "
+                  >
+                    {post.category.name}
+                  </span>
+                </div>
+              )}
+
+              {/* VIDEO LABEL */}
+
+              {videoUrl && (
+                <div
+                  className="
+                    mb-3
+                    flex
+                    items-center
+                    gap-2
+                    text-sm
+                    font-semibold
+                    text-white
+                  "
+                >
+                  <span
+                    className="
+                      flex
+                      h-7
+                      w-7
+                      items-center
+                      justify-center
+                      rounded-full
+                      bg-red-600
+                    "
+                  >
+                    <Play
+                      size={13}
+                      fill="currentColor"
+                    />
+                  </span>
+
+                  Video News
+                </div>
+              )}
+
+              {/* TITLE */}
+
+              <Link
+                href={`/news/${post.slug}`}
+              >
+                <h1
+                  className="
+                    line-clamp-3
+                    text-3xl
+                    font-extrabold
+                    leading-tight
+                    text-white
+                    drop-shadow-lg
+                    transition
+                    hover:text-red-200
+                    sm:text-4xl
+                    lg:text-5xl
+                    xl:text-6xl
+                  "
+                >
+                  {post.title}
+                </h1>
+              </Link>
+
+              {/* EXCERPT */}
+
+              {post.excerpt && (
+                <p
+                  className="
+                    mt-4
+                    line-clamp-2
+                    max-w-3xl
+                    text-sm
+                    leading-6
+                    text-white/85
+                    sm:text-base
+                    sm:leading-7
+                  "
+                >
+                  {post.excerpt}
+                </p>
+              )}
+
+              {/* READ MORE */}
+
+              <Link
+                href={`/news/${post.slug}`}
+                className="
+                  mt-5
+                  inline-flex
+                  items-center
+                  gap-2
+                  rounded-xl
+                  bg-white
+                  px-5
+                  py-3
+                  text-sm
+                  font-bold
+                  text-slate-900
+                  shadow-xl
+                  transition
+                  hover:bg-red-600
+                  hover:text-white
+                "
+              >
+                {videoUrl
+                  ? "Watch News"
+                  : "Read Full News"}
+
+                <ChevronRight
+                  size={17}
+                />
+              </Link>
+            </div>
+          </div>
+
+          {/* =================================================
+              PREVIOUS BUTTON
+          ================================================= */}
+
+          {posts.length > 1 && (
+            <button
+              type="button"
+              onClick={previousSlide}
+              aria-label="Previous hero news"
+              className="
+                absolute
+                left-4
+                top-1/2
+                z-30
+                flex
+                h-11
+                w-11
+                -translate-y-1/2
+                items-center
+                justify-center
+                rounded-full
+                bg-black/60
+                text-white
+                shadow-xl
+                backdrop-blur-sm
+                transition
+                hover:scale-105
+                hover:bg-black/80
+              "
+            >
+              <ChevronLeft
+                size={24}
+              />
+            </button>
+          )}
+
+          {/* =================================================
+              NEXT BUTTON
+          ================================================= */}
+
+          {posts.length > 1 && (
+            <button
+              type="button"
+              onClick={nextSlide}
+              aria-label="Next hero news"
+              className="
+                absolute
+                right-4
+                top-1/2
+                z-30
+                flex
+                h-11
+                w-11
+                -translate-y-1/2
+                items-center
+                justify-center
+                rounded-full
+                bg-black/60
+                text-white
+                shadow-xl
+                backdrop-blur-sm
+                transition
+                hover:scale-105
+                hover:bg-black/80
+              "
+            >
+              <ChevronRight
+                size={24}
+              />
+            </button>
+          )}
+
+          {/* =================================================
+              SLIDE INDICATORS
+          ================================================= */}
+
+          {posts.length > 1 && (
+            <div
+              className="
+                absolute
+                bottom-5
+                right-5
+                z-30
+                flex
+                items-center
+                gap-2
+                rounded-full
+                bg-black/50
+                px-3
+                py-2
+                backdrop-blur-sm
+              "
+            >
+              {posts.map(
+                (item, index) => (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() =>
+                      setCurrent(index)
+                    }
+                    aria-label={`Go to hero news ${
+                      index + 1
+                    }`}
+                    className={`
+                      h-2
+                      rounded-full
+                      transition-all
+                      ${
+                        index === current
+                          ? "w-7 bg-white"
+                          : "w-2 bg-white/50"
+                      }
+                    `}
+                  />
+                )
+              )}
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* Left Arrow */}
-
-      <button
-        onClick={prevSlide}
-        className="absolute left-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/40 flex items-center justify-center text-white transition"
-      >
-        <ChevronLeft />
-      </button>
-
-      {/* Right Arrow */}
-
-      <button
-        onClick={nextSlide}
-        className="absolute right-6 top-1/2 -translate-y-1/2 z-30 w-12 h-12 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/40 flex items-center justify-center text-white transition"
-      >
-        <ChevronRight />
-      </button>
-
-      {/* Indicators */}
-
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 z-30">
-
-        {posts.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => setCurrent(index)}
-            className={`transition-all rounded-full h-3 ${
-              current === index
-                ? "w-8 bg-white"
-                : "w-3 bg-white/50"
-            }`}
-          />
-        ))}
-
-      </div>
-
     </section>
   );
 }

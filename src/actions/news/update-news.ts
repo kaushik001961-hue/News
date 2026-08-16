@@ -10,7 +10,6 @@ import { redirect } from "next/navigation";
 
 import { PostStatus } from "@prisma/client";
 
-
 export interface UpdateNewsInput {
   id: string;
 
@@ -53,6 +52,10 @@ export interface UpdateNewsInput {
 export async function updateNewsAction(
   values: UpdateNewsInput
 ) {
+  /* =====================================================
+     AUTHENTICATION
+  ===================================================== */
+
   const session = await auth();
 
   if (!session?.user?.id) {
@@ -60,6 +63,18 @@ export async function updateNewsAction(
   }
 
   const role = session.user.role;
+
+  if (
+    role !== "ADMIN" &&
+    role !== "EDITOR" &&
+    role !== "REPORTER"
+  ) {
+    throw new Error("Unauthorized");
+  }
+
+  /* =====================================================
+     GET EXISTING NEWS
+  ===================================================== */
 
   const existing =
     await prisma.post.findUnique({
@@ -76,36 +91,48 @@ export async function updateNewsAction(
     throw new Error("News not found.");
   }
 
-  /*
-  =====================================
-  Reporter can edit only own news
-  =====================================
-  */
+  /* =====================================================
+     REPORTER PERMISSION
+     
+     Reporter can edit ONLY their own News.
+     
+     IMPORTANT:
+     assignedReporterId is not used here for ownership.
+     
+     Ownership is based on authorId.
+  ===================================================== */
 
   if (
     role === "REPORTER" &&
-    existing.authorId !==
-      session.user.id
+    existing.authorId !== session.user.id
   ) {
     throw new Error(
-      "Unauthorized"
+      "You can only edit your own News."
     );
   }
 
-  /*
-  =====================================
-  Create / Find Tags
-  =====================================
-  */
+  /* =====================================================
+     CREATE / FIND TAGS
+  ===================================================== */
 
   const tagIds: { id: string }[] = [];
 
   if (values.tags?.length) {
     for (const tagName of values.tags) {
-      const slug = tagName
-        .trim()
+      const cleanTag =
+        tagName.trim();
+
+      if (!cleanTag) {
+        continue;
+      }
+
+      const slug = cleanTag
         .toLowerCase()
-        .replace(/\s+/g, "-");
+        .replace(/\s+/g, "-")
+        .replace(
+          /[^a-z0-9-]/g,
+          ""
+        );
 
       let tag =
         await prisma.tag.findUnique({
@@ -118,7 +145,7 @@ export async function updateNewsAction(
         tag =
           await prisma.tag.create({
             data: {
-              name: tagName,
+              name: cleanTag,
               slug,
             },
           });
@@ -130,133 +157,307 @@ export async function updateNewsAction(
     }
   }
 
-  /*
-  =====================================
-  Workflow
-  =====================================
-  */
+  /* =====================================================
+     WORKFLOW VARIABLES
+  ===================================================== */
 
-  let status =
-    values.status ?? "DRAFT";
+  let status: PostStatus;
 
   let submittedAt:
     | Date
-    | null = null;
+    | null = existing.submittedAt;
 
   let reviewedAt:
     | Date
-    | null = null;
+    | null = existing.reviewedAt;
 
   let reviewedById:
     | string
-    | undefined;
+    | null = existing.reviewedById;
 
   let approvedById:
     | string
-    | undefined;
+    | null = existing.approvedById;
 
   let publishedAt:
     | Date
-    | null = null;
+    | null = existing.publishedAt;
 
-  let assignedEditorId =
-    values.assignedEditorId;
+  let assignedEditorId:
+    | string
+    | null =
+      existing.assignedEditorId;
 
-  let assignedReporterId =
-    values.assignedReporterId;
+  let assignedReporterId:
+    | string
+    | null =
+      existing.assignedReporterId;
 
-  switch (role) {
-    case "REPORTER":
-      status = "PENDING";
-      submittedAt = new Date();
-      break;
+  /* =====================================================
+     REPORTER
+     
+     REPORTER CANNOT:
+     
+     ❌ Publish
+     ❌ Approve
+     ❌ Reject
+     ❌ Review
+     ❌ Assign Editor
+     ❌ Change workflow status
+     
+     Reporter submission ALWAYS becomes PENDING.
+  ===================================================== */
 
-    case "EDITOR":
-      reviewedById =
-        session.user.id;
+  if (role === "REPORTER") {
+    status = "PENDING";
 
-      reviewedAt = new Date();
+    submittedAt = new Date();
 
-      assignedEditorId =
-        session.user.id;
+    /*
+     * Reporter cannot modify these fields.
+     */
 
-      if (
-        status === "PUBLISHED"
-      ) {
-        publishedAt =
-          new Date();
-      }
+    reviewedAt =
+      existing.reviewedAt;
 
-      break;
+    reviewedById =
+      existing.reviewedById;
 
-    case "ADMIN":
-      approvedById =
-        session.user.id;
+    approvedById =
+      existing.approvedById;
 
-      if (
-        status === "PUBLISHED"
-      ) {
-        publishedAt =
-          new Date();
-      }
+    publishedAt =
+      existing.publishedAt;
 
-      break;
-  }  /*
-  =====================================
-  Update News
-  =====================================
-  */
+    assignedEditorId =
+      existing.assignedEditorId;
+
+    /*
+     * Reporter remains the author.
+     *
+     * Do not allow the Reporter to assign
+     * the News to another Reporter.
+     */
+    assignedReporterId =
+      existing.assignedReporterId;
+  }
+
+  /* =====================================================
+     EDITOR
+     
+     Editor can review and publish.
+  ===================================================== */
+
+  else if (role === "EDITOR") {
+    status =
+      values.status ??
+      existing.status;
+
+    reviewedById =
+      session.user.id;
+
+    reviewedAt =
+      new Date();
+
+    /*
+     * Editor becomes assigned editor.
+     */
+    assignedEditorId =
+      session.user.id;
+
+    /*
+     * Editor can publish.
+     */
+    if (
+      status === "PUBLISHED"
+    ) {
+      publishedAt =
+        existing.publishedAt ??
+        new Date();
+    }
+
+    /*
+     * If Editor moves News away from
+     * PUBLISHED, clear publication date.
+     */
+    if (
+      status !== "PUBLISHED"
+    ) {
+      publishedAt = null;
+    }
+
+    /*
+     * Preserve existing Reporter unless
+     * a valid value was explicitly supplied.
+     */
+    assignedReporterId =
+      values.assignedReporterId?.trim() ||
+      existing.assignedReporterId ||
+      null;
+  }
+
+  /* =====================================================
+     ADMIN
+     
+     Admin has full workflow permission.
+  ===================================================== */
+
+  else {
+    status =
+      values.status ??
+      existing.status;
+
+    approvedById =
+      session.user.id;
+
+    /*
+     * Admin may publish.
+     */
+    if (
+      status === "PUBLISHED"
+    ) {
+      publishedAt =
+        existing.publishedAt ??
+        new Date();
+    }
+
+    /*
+     * If Admin changes the News away
+     * from PUBLISHED, clear publishedAt.
+     */
+    if (
+      status !== "PUBLISHED"
+    ) {
+      publishedAt = null;
+    }
+
+    /*
+     * Preserve / update assignments.
+     */
+    assignedEditorId =
+      values.assignedEditorId?.trim() ||
+      existing.assignedEditorId ||
+      null;
+
+    assignedReporterId =
+      values.assignedReporterId?.trim() ||
+      existing.assignedReporterId ||
+      null;
+  }
+
+  /* =====================================================
+     SAFETY CHECK
+     
+     Reporter MUST NEVER publish.
+     
+     This is intentionally duplicated as a final
+     server-side protection.
+  ===================================================== */
+
+  if (
+    role === "REPORTER" &&
+    status === "PUBLISHED"
+  ) {
+    throw new Error(
+      "Reporters are not allowed to publish News."
+    );
+  }
+
+  /* =====================================================
+     UPDATE NEWS
+  ===================================================== */
 
   await updateNews({
     id: values.id,
 
-    title: values.title,
-    slug: values.slug,
+    title:
+      values.title,
 
-    excerpt: values.excerpt,
-    content: values.content,
+    slug:
+      values.slug,
 
-    image: values.image,
-    video: values.video,
+    excerpt:
+      values.excerpt,
 
-    categoryId: values.categoryId,
+    content:
+      values.content,
 
-    stateId: values.stateId,
-    districtId: values.districtId,
-    talukaId: values.talukaId,
-    village: values.village,
+    image:
+      values.image,
 
-    seoTitle: values.seoTitle,
-    seoDescription: values.seoDescription,
-    seoKeywords: values.seoKeywords,
-    canonicalUrl: values.canonicalUrl,
-    focusKeyword: values.focusKeyword,
+    video:
+      values.video,
 
-    featured: values.featured ?? false,
-    breaking: values.breaking ?? false,
-    trending: values.trending ?? false,
-    hero: values.hero ?? false,
-    editorsPick: values.editorsPick ?? false,
+    categoryId:
+      values.categoryId,
+
+    stateId:
+      values.stateId,
+
+    districtId:
+      values.districtId,
+
+    talukaId:
+      values.talukaId,
+
+    village:
+      values.village,
+
+    seoTitle:
+      values.seoTitle,
+
+    seoDescription:
+      values.seoDescription,
+
+    seoKeywords:
+      values.seoKeywords,
+
+    canonicalUrl:
+      values.canonicalUrl,
+
+    focusKeyword:
+      values.focusKeyword,
+
+    featured:
+      values.featured ?? false,
+
+    breaking:
+      values.breaking ?? false,
+
+    trending:
+      values.trending ?? false,
+
+    hero:
+      values.hero ?? false,
+
+    editorsPick:
+      values.editorsPick ?? false,
 
     status,
 
-    assignedReporterId,
-    assignedEditorId,
+    assignedReporterId:
+      assignedReporterId ?? undefined,
 
-    approvedById,
-    reviewedById,
+    assignedEditorId:
+      assignedEditorId ?? undefined,
+
+    approvedById:
+      approvedById ?? undefined,
+
+    reviewedById:
+      reviewedById ?? undefined,
 
     reviewedAt,
+
     submittedAt,
 
-    authorId: existing.authorId,
+    authorId:
+      existing.authorId,
   });
 
-  /*
-  =====================================
-  Update Tags
-  =====================================
-  */
+  /* =====================================================
+     UPDATE TAGS
+  ===================================================== */
 
   await prisma.post.update({
     where: {
@@ -272,11 +473,9 @@ export async function updateNewsAction(
     },
   });
 
-  /*
-  =====================================
-  Workflow Fields
-  =====================================
-  */
+  /* =====================================================
+     WORKFLOW FIELDS
+  ===================================================== */
 
   await prisma.post.update({
     where: {
@@ -296,23 +495,21 @@ export async function updateNewsAction(
     },
   });
 
-  /*
-  =====================================
-  Revalidate
-  =====================================
-  */
+  /* =====================================================
+     REVALIDATE
+  ===================================================== */
 
   revalidatePath("/");
 
   revalidatePath("/admin/news");
+
   revalidatePath("/editor/news");
+
   revalidatePath("/reporter/news");
 
-  /*
-  =====================================
-  Redirect
-  =====================================
-  */
+  /* =====================================================
+     REDIRECT
+  ===================================================== */
 
   switch (role) {
     case "ADMIN":
